@@ -20,6 +20,15 @@ def hacer_prediccion(datos):
     response = requests.post(url, headers=headers, json={"data": datos})
     return response.json()
 
+def extraer_prediccion(fila):
+    """Función segura para obtener la predicción sin KeyError."""
+    if "prediction" in fila:
+        return fila["prediction"]
+    elif "predictionValues" in fila:
+        return fila["predictionValues"][0]["value"]
+    else:
+        return None
+
 # ==================================
 # CONFIGURACIÓN STREAMLIT
 # ==================================
@@ -79,16 +88,19 @@ with col1:
 with col2:
     if st.button("🔍 Predecir Colesterol (manual)"):
         resultado = hacer_prediccion(datos_manual.to_dict(orient="records"))
-        prediccion = resultado["data"][0]["prediction"]
+        fila = resultado["data"][0]
+        prediccion = extraer_prediccion(fila)
 
-        st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
-
-        if prediccion < 200:
-            st.success("✅ Nivel deseable")
-        elif prediccion < 240:
-            st.warning("⚠️ Nivel límite alto")
+        if prediccion is not None:
+            st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
+            if prediccion < 200:
+                st.success("✅ Nivel deseable")
+            elif prediccion < 240:
+                st.warning("⚠️ Nivel límite alto")
+            else:
+                st.error("❌ Nivel alto")
         else:
-            st.error("❌ Nivel alto")
+            st.error("No se encontró la clave de predicción en la respuesta.")
 
 # ==================================
 # PREDICCIONES EN LOTE DESDE CSV
@@ -103,7 +115,7 @@ if archivo_csv is not None:
 
     if st.button("🔍 Predecir desde CSV"):
         resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
-        predicciones = [fila["prediction"] for fila in resultado["data"]]
+        predicciones = [extraer_prediccion(fila) for fila in resultado["data"]]
         datos_csv["colesterol_estimado"] = predicciones
 
         st.success("✅ Predicciones generadas correctamente")
@@ -121,4 +133,3 @@ if archivo_csv is not None:
 # ==================================
 st.markdown("---")
 st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
-
