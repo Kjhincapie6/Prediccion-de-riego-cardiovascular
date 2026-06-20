@@ -11,13 +11,15 @@ DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
 HOST = os.getenv("DATAROBOT_HOST")
 
 headers = {
-    "Authorization": f"Bearer {API_KEY}",
+    "Authorization": f"Token {API_KEY}",  # usa Token en lugar de Bearer
     "Content-Type": "application/json"
 }
 
 def hacer_prediccion(datos):
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
     response = requests.post(url, headers=headers, json={"data": datos})
+    if response.status_code != 200:
+        return {"error": response.text}
     return response.json()
 
 # ==================================
@@ -69,24 +71,6 @@ datos_manual = pd.DataFrame([{
     "edad_anhos": edad_anhos,
     "indice_masa_corporal": indice_masa_corporal
 }])
-if st.button("🔍 Predecir desde CSV"):
-    resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
-    st.write("Respuesta completa de la API:", resultado)  # debug
-    
-    predicciones = []
-    for fila in resultado.get("data", []):
-        # intenta varias claves posibles
-        if "prediction" in fila:
-            predicciones.append(fila["prediction"])
-        elif "predictions" in fila:
-            # si es lista de predicciones, toma la primera
-            predicciones.append(fila["predictions"][0].get("value", None))
-        else:
-            predicciones.append(None)
-    
-    datos_csv["colesterol_estimado"] = predicciones
-    st.success("✅ Predicciones generadas correctamente")
-    st.dataframe(datos_csv, use_container_width=True)
 
 # Mostrar datos y predicción manual
 col1, col2 = st.columns([2, 1])
@@ -95,18 +79,22 @@ with col1:
     st.dataframe(datos_manual, use_container_width=True)
 
 with col2:
-    if st.button("🔍 Predecir Colesterol (manual)"):
+    if st.button("🔍 Predecir Colesterol (manual)", key="btn_manual"):
         resultado = hacer_prediccion(datos_manual.to_dict(orient="records"))
-        prediccion = resultado["data"][0]["prediction"]
-
-        st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
-
-        if prediccion < 200:
-            st.success("✅ Nivel deseable")
-        elif prediccion < 240:
-            st.warning("⚠️ Nivel límite alto")
+        if "error" in resultado:
+            st.error(f"Error en la predicción: {resultado['error']}")
         else:
-            st.error("❌ Nivel alto")
+            prediccion = resultado.get("data", [{}])[0].get("prediction", None)
+            if prediccion is not None:
+                st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
+                if prediccion < 200:
+                    st.success("✅ Nivel deseable")
+                elif prediccion < 240:
+                    st.warning("⚠️ Nivel límite alto")
+                else:
+                    st.error("❌ Nivel alto")
+            else:
+                st.error("No se encontró la clave 'prediction' en la respuesta.")
 
 # ==================================
 # PREDICCIONES EN LOTE DESDE CSV
@@ -119,20 +107,30 @@ if archivo_csv is not None:
     st.write("Datos cargados:")
     st.dataframe(datos_csv.head(), use_container_width=True)
 
-    if st.button("🔍 Predecir desde CSV"):
+    if st.button("🔍 Predecir desde CSV", key="btn_csv"):
         resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
-        predicciones = [fila["prediction"] for fila in resultado["data"]]
-        datos_csv["colesterol_estimado"] = predicciones
+        if "error" in resultado:
+            st.error(f"Error en la predicción: {resultado['error']}")
+        else:
+            predicciones = []
+            for fila in resultado.get("data", []):
+                if "prediction" in fila:
+                    predicciones.append(fila["prediction"])
+                elif "predictions" in fila:
+                    predicciones.append(fila["predictions"][0].get("value", None))
+                else:
+                    predicciones.append(None)
 
-        st.success("✅ Predicciones generadas correctamente")
-        st.dataframe(datos_csv, use_container_width=True)
+            datos_csv["colesterol_estimado"] = predicciones
+            st.success("✅ Predicciones generadas correctamente")
+            st.dataframe(datos_csv, use_container_width=True)
 
-        st.download_button(
-            label="⬇️ Descargar resultados",
-            data=datos_csv.to_csv(index=False).encode("utf-8"),
-            file_name="resultados_colesterol.csv",
-            mime="text/csv"
-        )
+            st.download_button(
+                label="⬇️ Descargar resultados",
+                data=datos_csv.to_csv(index=False).encode("utf-8"),
+                file_name="resultados_colesterol.csv",
+                mime="text/csv"
+            )
 
 # ==================================
 # PIE DE PÁGINA
