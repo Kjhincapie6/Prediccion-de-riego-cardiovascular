@@ -1,32 +1,30 @@
+import streamlit as st
+import pandas as pd
+import requests
+import os
+
+# Configuración API
+API_KEY = os.getenv("DATAROBOT_API_KEY")
+DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
+HOST = os.getenv("DATAROBOT_HOST")
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+def hacer_prediccion(datos):
+    url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
+    response = requests.post(url, headers=headers, json={"data": datos})
+    return response.json()
+
 # ==================================
-# PREDICCIONES EN LOTE DESDE CSV
+# CONFIGURACIÓN STREAMLIT
 # ==================================
+st.set_page_config(page_title="Predicción de Colesterol", page_icon="🩺", layout="wide")
+st.title("🩺 Predictor de Colesterol")
+st.markdown("Ingrese los datos del paciente o cargue un archivo CSV para obtener estimaciones de colesterol.")
+
+# 👉 Aquí sí va tu subheader
 st.subheader("📂 Predicciones en lote")
 archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
-
-if archivo_csv is not None:
-    # Leer archivo
-    datos_csv = pd.read_csv(archivo_csv)
-    st.write("Datos cargados:")
-    st.dataframe(datos_csv.head(), use_container_width=True)
-
-    # Botón para ejecutar predicción
-    if st.button("🔍 Predecir desde CSV"):
-        # Enviar datos a DataRobot
-        resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
-        predicciones = [fila["prediction"] for fila in resultado["data"]]
-
-        # Agregar columna de predicciones
-        datos_csv["colesterol_estimado"] = predicciones
-
-        # Mostrar resultados
-        st.write("Resultados con predicciones:")
-        st.dataframe(datos_csv, use_container_width=True)
-
-        # Descargar resultados
-        st.download_button(
-            label="⬇️ Descargar resultados",
-            data=datos_csv.to_csv(index=False).encode("utf-8"),
-            file_name="resultados_colesterol.csv",
-            mime="text/csv"
-        )
