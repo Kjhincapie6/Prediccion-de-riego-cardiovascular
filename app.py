@@ -33,9 +33,85 @@ st.markdown("Ingrese los datos del paciente o cargue un archivo CSV para obtener
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
-edad_anhios = st.sidebar.slider("Edad", 18, 100, 35)
+edad_anhos = st.sidebar.slider("Edad", 18, 100, 35)
 estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
 peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
 presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
-glucosa = st.sidebar.slider("Glucosa
+glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
+fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
+consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
+actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
+enfermedad_cardiaca = st.sidebar.selectbox("¿Enfermedad Cardíaca?", ["No", "Sí"])
+indice_masa_corporal = st.sidebar.number_input("IMC", min_value=10.0, max_value=60.0, value=24.5)
+
+# Codificación
+genero = 1 if genero == "Masculino" else 0
+fuma = 1 if fuma == "Sí" else 0
+consume_alcohol = 1 if consume_alcohol == "Sí" else 0
+enfermedad_cardiaca = 1 if enfermedad_cardiaca == "Sí" else 0
+actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
+actividad_fisica = actividad_map[actividad_fisica]
+
+datos_manual = pd.DataFrame([{
+    "genero": genero,
+    "estatura_cm": estatura_cm,
+    "peso_kg": peso_kg,
+    "presion_sistolica": presion_sistolica,
+    "presion_diastolica": presion_diastolica,
+    "glucosa": glucosa,
+    "fuma": fuma,
+    "consume_alcohol": consume_alcohol,
+    "actividad_fisica": actividad_fisica,
+    "enfermedad_cardiaca": enfermedad_cardiaca,
+    "edad_anhos": edad_anhos,
+    "indice_masa_corporal": indice_masa_corporal
+}])
+
+# ==================================
+# OPCIÓN 2: SUBIR CSV
+# ==================================
+st.subheader("📂 Predicciones en lote")
+archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
+
+if archivo_csv is not None:
+    datos_csv = pd.read_csv(archivo_csv)
+    st.write("Datos cargados:")
+    st.dataframe(datos_csv.head(), use_container_width=True)
+
+    if st.button("🔍 Predecir desde CSV"):
+        resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
+        predicciones = [fila["prediction"] for fila in resultado["data"]]
+        datos_csv["colesterol_estimado"] = predicciones
+
+        st.write("Resultados con predicciones:")
+        st.dataframe(datos_csv, use_container_width=True)
+
+# ==================================
+# PREDICCIÓN MANUAL
+# ==================================
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    st.subheader("Variables ingresadas (manual)")
+    st.dataframe(datos_manual, use_container_width=True)
+
+with col2:
+    if st.button("🔍 Predecir Colesterol (manual)"):
+        resultado = hacer_prediccion(datos_manual.to_dict(orient="records"))
+        prediccion = resultado["data"][0]["prediction"]
+
+        st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
+
+        if prediccion < 200:
+            st.success("Nivel deseable")
+        elif prediccion < 240:
+            st.warning("Nivel límite alto")
+        else:
+            st.error("Nivel alto")
+
+# ==================================
+# PIE DE PÁGINA
+# ==================================
+st.markdown("---")
+st.caption("Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
