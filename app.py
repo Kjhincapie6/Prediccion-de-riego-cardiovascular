@@ -1,6 +1,15 @@
 import argparse
 import requests
 import pandas as pd
+import subprocess
+
+subprocess.run([
+    "python",
+    "C:/Users/kelly/OneDrive/Documentos/EstudIA/DATAROBOT/PREDICCIONES CARDIO/predict.py",
+    "cardio_test.csv",
+    "resultados.csv",
+    "6a35a3e185191304741588d4"
+])
 
 def main():
     parser = argparse.ArgumentParser(description="Cliente de predicciones DataRobot")
