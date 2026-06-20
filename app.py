@@ -3,9 +3,6 @@ import requests
 import pandas as pd
 
 def main():
-    # ==============================
-    # PARÁMETROS DE ENTRADA
-    # ==============================
     parser = argparse.ArgumentParser(description="Cliente de predicciones DataRobot")
     parser.add_argument("input_file", help="Archivo CSV de entrada con datos")
     parser.add_argument("output_file", help="Archivo CSV de salida con predicciones")
@@ -14,43 +11,28 @@ def main():
     parser.add_argument("--host", default="https://app.datarobot.com", help="Host de DataRobot")
     args = parser.parse_args()
 
-    # ==============================
-    # DEBUG: mostrar credenciales
-    # ==============================
     print("🔑 API_KEY:", args.api_key[:10] + "..." if args.api_key else "VACÍO")
     print("📦 DEPLOYMENT_ID:", args.deployment_id)
     print("🌐 HOST:", args.host)
 
-    # ==============================
-    # CONFIGURACIÓN DE LA API
-    # ==============================
     headers = {
-        "Authorization": f"Token {args.api_key}",   # ✅ CORRECTO: usar Token
+        "Authorization": f"Token {args.api_key}",   # ✅ CORRECTO
         "Content-Type": "application/json"
     }
     url = f"{args.host}/api/v2/deployments/{args.deployment_id}/predictions"
 
-    # ==============================
-    # LECTURA DE DATOS
-    # ==============================
     try:
         datos = pd.read_csv(args.input_file)
     except Exception as e:
         print(f"❌ Error leyendo el archivo de entrada: {e}")
         return
 
-    # ==============================
-    # PETICIÓN A DATAROBOT
-    # ==============================
     response = requests.post(url, headers=headers, json={"data": datos.to_dict(orient="records")})
 
     if response.status_code != 200:
         print(f"❌ Error en la API ({response.status_code}): {response.text}")
         return
 
-    # ==============================
-    # PROCESAR RESPUESTA
-    # ==============================
     resultado = response.json()
     filas = resultado.get("data", resultado.get("predictions", []))
     predicciones = []
@@ -63,15 +45,11 @@ def main():
         else:
             predicciones.append(None)
 
-    # Validar longitud
     if len(predicciones) != len(datos):
         print(f"⚠️ La API devolvió {len(predicciones)} predicciones para {len(datos)} filas.")
         print("Respuesta completa:", resultado)
         return
 
-    # ==============================
-    # GUARDAR RESULTADOS
-    # ==============================
     datos["prediccion"] = predicciones
     try:
         datos.to_csv(args.output_file, index=False)
