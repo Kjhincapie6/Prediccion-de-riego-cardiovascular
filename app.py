@@ -6,6 +6,8 @@ import os
 # ==================================
 # CONFIGURACIÓN API DATAROBOT
 # ==================================
+print("API_KEY cargada:", API_KEY[:10], "...")
+
 API_KEY = os.getenv("DATAROBOT_API_KEY")
 DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
 HOST = os.getenv("DATAROBOT_HOST")
