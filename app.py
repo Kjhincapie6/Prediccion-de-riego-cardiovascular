@@ -69,6 +69,24 @@ datos_manual = pd.DataFrame([{
     "edad_anhos": edad_anhos,
     "indice_masa_corporal": indice_masa_corporal
 }])
+if st.button("🔍 Predecir desde CSV"):
+    resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
+    st.write("Respuesta completa de la API:", resultado)  # debug
+    
+    predicciones = []
+    for fila in resultado.get("data", []):
+        # intenta varias claves posibles
+        if "prediction" in fila:
+            predicciones.append(fila["prediction"])
+        elif "predictions" in fila:
+            # si es lista de predicciones, toma la primera
+            predicciones.append(fila["predictions"][0].get("value", None))
+        else:
+            predicciones.append(None)
+    
+    datos_csv["colesterol_estimado"] = predicciones
+    st.success("✅ Predicciones generadas correctamente")
+    st.dataframe(datos_csv, use_container_width=True)
 
 # Mostrar datos y predicción manual
 col1, col2 = st.columns([2, 1])
