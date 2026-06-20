@@ -11,7 +11,7 @@ DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
 HOST = os.getenv("DATAROBOT_HOST")
 
 headers = {
-    "Authorization": f"Token {API_KEY}",  # usa Token en lugar de Bearer
+    "Authorization": f"Token {API_KEY}",  # DataRobot requiere Token
     "Content-Type": "application/json"
 }
 
@@ -137,3 +137,4 @@ if archivo_csv is not None:
 # ==================================
 st.markdown("---")
 st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
+
