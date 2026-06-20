@@ -12,20 +12,19 @@ estatura = st.number_input("Estatura en cm", min_value=100, max_value=220, value
 peso = st.number_input("Peso en kg", min_value=30.0, max_value=200.0, value=70.0)
 presion_sistolica = st.number_input("Presión sistólica", min_value=80, max_value=200, value=120)
 presion_diastolica = st.number_input("Presión diastólica", min_value=50, max_value=130, value=80)
-colesterol = st.selectbox("Colesterol", [1, 2, 3])
-glucosa = st.selectbox("Glucosa", [1, 2, 3])
+colesterol = st.selectbox("Colesterol", [1, 2, 3])  # 1=Normal, 2=Arriba de lo normal, 3=Muy alto
+glucosa = st.selectbox("Glucosa", [1, 2, 3])       # 1=Normal, 2=Arriba de lo normal, 3=Muy alto
 fuma = st.selectbox("¿Fuma?", ["No", "Sí"])
 alcohol = st.selectbox("¿Consume alcohol?", ["No", "Sí"])
 actividad = st.selectbox("¿Realiza actividad física?", ["No", "Sí"])
 
-# --- IMC ---
+# --- Variable calculada: IMC ---
 imc = round(peso / ((estatura / 100) ** 2), 2)
-st.write("Índice de masa corporal (IMC):", imc)
+st.write("Índice de masa corporal:", imc)
 
 # --- Botón de predicción ---
 if st.button("Predecir riesgo cardiovascular"):
-
-    # 1. Crear CSV de entrada
+    # Crear CSV temporal con los datos del formulario
     df = pd.DataFrame([{
         "age": edad,
         "gender": genero,
@@ -39,56 +38,26 @@ if st.button("Predecir riesgo cardiovascular"):
         "alco": 1 if alcohol == "Sí" else 0,
         "active": 1 if actividad == "Sí" else 0
     }])
+    df.to_csv("temp_input.csv", index=False)
 
-    input_file = "temp_input.csv"
-    output_file = "temp_output.csv"
-
-    df.to_csv(input_file, index=False)
-
-    # 2. Ejecutar script de predicción
+    # Ejecutar predict.py con el CSV temporal
     try:
         subprocess.run([
             "python",
             "C:/Users/kelly/OneDrive/Documentos/EstudIA/DATAROBOT/PREDICCIONES CARDIO/predict.py",
-            input_file,
-            output_file,
+            "temp_input.csv",
+            "temp_output.csv",
             "6a35a3e185191304741588d4",
             "--api_key=TU_API_KEY_REAL",
             "--host=https://app.datarobot.com"
         ], check=True)
 
-        # 3. Leer resultados
-        if os.path.exists(output_file):
-            resultado = pd.read_csv(output_file)
-
+        # Leer resultados y mostrarlos
+        if os.path.exists("temp_output.csv"):
+            resultados = pd.read_csv("temp_output.csv")
             st.success("Predicción realizada con éxito")
-            st.write("Resultados:")
-            st.dataframe(resultado)
-
-            # --- manejo seguro de predicción ---
-            if "prediction" in resultado.columns:
-                predicciones = resultado["prediction"].tolist()
-                st.write("Predicciones:", predicciones)
-
-            elif "PredictedClass" in resultado.columns:
-                predicciones = resultado["PredictedClass"].tolist()
-                st.write("Predicciones:", predicciones)
-
-            else:
-                st.error(
-                    f"No se encontró columna de predicción. Columnas disponibles: {list(resultado.columns)}"
-                )
+            st.write(resultados)
         else:
-            st.error("No se generó el archivo de salida.")
-
-    except subprocess.CalledProcessError as e:
-        st.error(f"Error ejecutando predict.py: {e}")
-
+            st.error("No se generó el archivo de resultados.")
     except Exception as e:
-        st.error(f"Error general: {e}")
-
-# ==================================
-# PIE DE PÁGINA
-# ==================================
-st.markdown("---")
-st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
+        st.error(f"Error ejecutando predict.py: {e}")
