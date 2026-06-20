@@ -15,6 +15,13 @@ def main():
     args = parser.parse_args()
 
     # ==============================
+    # DEBUG: mostrar credenciales
+    # ==============================
+    print("🔑 API_KEY:", args.api_key[:10] + "..." if args.api_key else "VACÍO")
+    print("📦 DEPLOYMENT_ID:", args.deployment_id)
+    print("🌐 HOST:", args.host)
+
+    # ==============================
     # CONFIGURACIÓN DE LA API
     # ==============================
     headers = {
@@ -45,10 +52,6 @@ def main():
     # PROCESAR RESPUESTA
     # ==============================
     resultado = response.json()
-    if "data" not in resultado and "predictions" not in resultado:
-        print("❌ La respuesta no contiene predicciones:", resultado)
-        return
-
     filas = resultado.get("data", resultado.get("predictions", []))
     predicciones = []
 
