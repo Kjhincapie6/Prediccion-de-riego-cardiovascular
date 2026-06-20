@@ -29,6 +29,15 @@ def extraer_prediccion(fila):
     else:
         return None
 
+def obtener_filas(resultado):
+    """Detecta si la respuesta trae 'data' o 'predictions'."""
+    if "data" in resultado:
+        return resultado["data"]
+    elif "predictions" in resultado:
+        return resultado["predictions"]
+    else:
+        return []
+
 # ==================================
 # CONFIGURACIÓN STREAMLIT
 # ==================================
@@ -88,48 +97,23 @@ with col1:
 with col2:
     if st.button("🔍 Predecir Colesterol (manual)"):
         resultado = hacer_prediccion(datos_manual.to_dict(orient="records"))
-        fila = resultado["data"][0]
-        prediccion = extraer_prediccion(fila)
-
-        if prediccion is not None:
-            st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
-            if prediccion < 200:
-                st.success("✅ Nivel deseable")
-            elif prediccion < 240:
-                st.warning("⚠️ Nivel límite alto")
+        filas = obtener_filas(resultado)
+        if filas:
+            prediccion = extraer_prediccion(filas[0])
+            if prediccion is not None:
+                st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
+                if prediccion < 200:
+                    st.success("✅ Nivel deseable")
+                elif prediccion < 240:
+                    st.warning("⚠️ Nivel límite alto")
+                else:
+                    st.error("❌ Nivel alto")
             else:
-                st.error("❌ Nivel alto")
+                st.error("No se encontró la clave de predicción en la respuesta.")
         else:
-            st.error("No se encontró la clave de predicción en la respuesta.")
+            st.error("La respuesta de la API no contiene datos de predicción.")
 
 # ==================================
 # PREDICCIONES EN LOTE DESDE CSV
 # ==================================
-st.markdown("### 📂 Predicciones en Lote")
-archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
-
-if archivo_csv is not None:
-    datos_csv = pd.read_csv(archivo_csv)
-    st.write("Datos cargados:")
-    st.dataframe(datos_csv.head(), use_container_width=True)
-
-    if st.button("🔍 Predecir desde CSV"):
-        resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
-        predicciones = [extraer_prediccion(fila) for fila in resultado["data"]]
-        datos_csv["colesterol_estimado"] = predicciones
-
-        st.success("✅ Predicciones generadas correctamente")
-        st.dataframe(datos_csv, use_container_width=True)
-
-        st.download_button(
-            label="⬇️ Descargar resultados",
-            data=datos_csv.to_csv(index=False).encode("utf-8"),
-            file_name="resultados_colesterol.csv",
-            mime="text/csv"
-        )
-
-# ==================================
-# PIE DE PÁGINA
-# ==================================
-st.markdown("---")
-st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
+st.markdown("### 📂 Predicciones
