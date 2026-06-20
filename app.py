@@ -11,7 +11,7 @@ DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
 HOST = os.getenv("DATAROBOT_HOST")
 
 headers = {
-    "Authorization": f"Bearer {API_KEY}",
+    "Authorization": f"Token {API_KEY}",   # ✅ CORREGIDO: usar Token en lugar de Bearer
     "Content-Type": "application/json"
 }
 
@@ -56,6 +56,7 @@ estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
 peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
 presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
+colesterol = st.sidebar.slider("Colesterol", 100, 400, 180)   # ✅ Incluido porque está en tu dataset
 glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
 fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
@@ -77,6 +78,7 @@ datos_manual = pd.DataFrame([{
     "peso_kg": peso_kg,
     "presion_sistolica": presion_sistolica,
     "presion_diastolica": presion_diastolica,
+    "colesterol": colesterol,
     "glucosa": glucosa,
     "fuma": fuma,
     "consume_alcohol": consume_alcohol,
