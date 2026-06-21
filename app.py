@@ -3,26 +3,17 @@ import pandas as pd
 import requests
 import os
 
-
 # ==================================
 # CONFIGURACIÓN API DATAROBOT
 # ==================================
+API_KEY = os.getenv("DATAROBOT_API_KEY")
+DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
+HOST = os.getenv("DATAROBOT_HOST")
 
-API_KEY = "TU_TOKEN_GENERADO"
-DEPLOYMENT_ID = "6a35a3e185191304741588d4"
-HOST = "https://app.datarobot.com"
-
-headers = {"Authorization": f"Token {API_KEY}", "Content-Type": "application/json"} url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
-
-resp = requests.post(url, headers=headers, json=data)
-
-st.write(resp.text)
-
-data = {"data":[{"edad_anhos":30,"peso_kg":70,"estatura_cm":170}]}
-resp = requests.post(url, headers=headers, json=data)
-
-print(resp.status_code)
-print(resp.text)
+headers = {
+    "Authorization": f"Token {API_KEY}",  # usa Token en lugar de Bearer
+    "Content-Type": "application/json"
+}
 
 def hacer_prediccion(datos):
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
@@ -145,5 +136,6 @@ if archivo_csv is not None:
 # PIE DE PÁGINA
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
+st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con St
+
 
