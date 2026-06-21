@@ -15,24 +15,39 @@ headers = {
     "Content-Type": "application/json"
 }
 
+# ==================================
+# FUNCIÓN PREDICCIÓN
+# ==================================
 def hacer_prediccion(df):
-
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
-    df = df.copy()
-
-    # ==================================
-    # IMPORTANTE:
-    # NO renombramos columnas sin confirmar schema del deployment
-    # ==================================
+    df = df.rename(columns={
+        "id_paciente": "id",
+        "edad_dias": "age",
+        "genero": "gender",
+        "estatura_cm": "height",
+        "peso_kg": "weight",
+        "presion_sistolica": "ap_hi",
+        "presion_diastolica": "ap_lo",
+        "colesterol": "cholesterol",
+        "glucosa": "gluc",
+        "fuma": "smoke",
+        "consume_alcohol": "alco",
+        "actividad_fisica": "active",
+        "enfermedad_cardiovascular": "cardio"
+    })
 
     datos = df.to_dict(orient="records")
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG CRÍTICO (te ayuda a detectar fallback)
-    st.write("🔍 STATUS:", response.status_code)
-    st.write("🔍 RESPONSE RAW:", response.text)
+    # DEBUG SEGURO
+    with st.expander("🔧 Información técnica"):
+        st.code(f"STATUS: {response.status_code}")
+        try:
+            st.json(response.json())
+        except Exception:
+            st.text(response.text)
 
     if response.status_code != 200:
         return {"error": response.text}
@@ -41,7 +56,7 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# CONFIGURACIÓN STREAMLIT
+# CONFIG STREAMLIT
 # ==================================
 st.set_page_config(
     page_title="Predicción de Colesterol",
@@ -60,9 +75,10 @@ st.markdown(
 )
 
 # ==================================
-# ENTRADA MANUAL
+# INPUT MANUAL
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
+
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
@@ -72,6 +88,7 @@ peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
 presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
 glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
+
 fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
@@ -79,7 +96,7 @@ enfermedad_cardiovascular = st.sidebar.selectbox("¿Enfermedad Cardiovascular?",
 colesterol = st.sidebar.selectbox("Colesterol (input modelo)", [1, 2, 3])
 
 # ==================================
-# CODIFICACIÓN (SOLO SI TU MODELO LO REQUIERE)
+# CODIFICACIÓN
 # ==================================
 genero = 1 if genero == "Masculino" else 0
 fuma = 1 if fuma == "Sí" else 0
@@ -112,7 +129,11 @@ col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("Variables ingresadas (manual)")
-    st.dataframe(datos_manual, use_container_width=True)
+    st.dataframe(
+        datos_manual,
+        use_container_width=True,
+        hide_index=True
+    )
 
 with col2:
     if st.button("🔍 Predecir Colesterol (manual)", key="btn_manual"):
@@ -120,42 +141,33 @@ with col2:
         resultado = hacer_prediccion(datos_manual)
 
         if "error" in resultado:
-            st.error(resultado["error"])
+            st.error(f"Error en la predicción: {resultado['error']}")
+
         else:
             fila = resultado.get("data", [{}])[0]
 
-            pred = fila.get("prediction")
+            prediccion = (
+                fila.get("prediction")
+                or fila.get("predictionValues", [{}])[0].get("value")
+            )
 
-            # intentar convertir a número
-            try:
-                pred_num = float(pred)
-            except:
-                pred_num = None
+            if prediccion is not None:
 
-            st.subheader("Resultado")
+                st.metric("Colesterol Estimado", f"{prediccion:.2f} mg/dL")
 
-            if pred_num is not None:
-                st.metric("Colesterol Estimado", f"{pred_num:.2f} mg/dL")
-
-                if pred_num < 200:
-                    st.success("✅ Nivel deseable")
-                elif pred_num < 240:
-                    st.warning("⚠️ Nivel límite alto")
+                if prediccion < 200:
+                    st.success("🟢 Nivel deseable")
+                elif prediccion < 240:
+                    st.warning("🟡 Nivel límite alto")
                 else:
-                    st.error("❌ Nivel alto")
+                    st.error("🔴 Nivel alto")
 
             else:
-                pred_alt = fila.get("predictionValues", [{}])[0].get("value")
+                st.error("No se encontró la predicción en la respuesta.")
 
-                st.metric("Resultado", str(pred_alt))
-
-                if str(pred_alt) in ["1", "Yes", "True"]:
-                    st.error("❌ Riesgo alto")
-                else:
-                    st.success("✅ Nivel controlado")
 
 # ==================================
-# PREDICCIONES EN LOTE
+# PREDICCIÓN EN LOTE
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
@@ -165,34 +177,40 @@ if archivo_csv is not None:
 
     datos_csv = pd.read_csv(archivo_csv)
 
-    st.write("Datos cargados:")
-    st.dataframe(datos_csv.head(), use_container_width=True)
+    st.dataframe(
+        datos_csv.head(),
+        use_container_width=True,
+        hide_index=True
+    )
 
     if st.button("🔍 Predecir desde CSV", key="btn_csv"):
 
         resultado = hacer_prediccion(datos_csv)
 
         if "error" in resultado:
-            st.error(resultado["error"])
-        else:
+            st.error(f"Error en la predicción: {resultado['error']}")
 
+        else:
             predicciones = []
 
             for fila in resultado.get("data", []):
 
-                pred = fila.get("prediction")
-
-                try:
-                    pred = float(pred)
-                except:
-                    pred = fila.get("predictionValues", [{}])[0].get("value")
+                pred = (
+                    fila.get("prediction")
+                    or fila.get("predictionValues", [{}])[0].get("value")
+                )
 
                 predicciones.append(pred)
 
             datos_csv["colesterol_estimado"] = predicciones
 
             st.success("✅ Predicciones generadas correctamente")
-            st.dataframe(datos_csv, use_container_width=True)
+
+            st.dataframe(
+                datos_csv,
+                use_container_width=True,
+                hide_index=True
+            )
 
             st.download_button(
                 label="⬇️ Descargar resultados",
@@ -200,6 +218,7 @@ if archivo_csv is not None:
                 file_name="resultados_colesterol.csv",
                 mime="text/csv"
             )
+
 
 # ==================================
 # PIE DE PÁGINA
