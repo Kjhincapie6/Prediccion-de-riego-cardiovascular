@@ -26,7 +26,7 @@ def hacer_prediccion(df):
 
     # MAPEO EXACTO MODELO DATAROBOT
     df = df.rename(columns={
-        "edad_anhos": "age",
+        "edad_dias": "age",
         "genero": "gender",
         "estatura_cm": "height",
         "peso_kg": "weight",
