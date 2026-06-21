@@ -16,7 +16,7 @@ headers = {
 }
 
 # ==================================
-# FUNCIÓN PREDICCIÓN (CORREGIDA)
+# FUNCIÓN PREDICCIÓN
 # ==================================
 def hacer_prediccion(df):
 
@@ -24,7 +24,7 @@ def hacer_prediccion(df):
 
     df = df.copy()
 
-    # 🔥 MAPEO CORRECTO (OBLIGATORIO SEGÚN ERROR DATAROBOT)
+    # 🔥 MAPEO CORRECTO SEGÚN DATAROBOT
     df = df.rename(columns={
         "edad_dias": "age",
         "genero": "gender",
@@ -44,9 +44,9 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG (solo para evitar errores silenciosos)
+    # DEBUG (importante mientras ajustas)
     st.write("🔍 STATUS:", response.status_code)
-    st.write("🔍 RESPONSE:", response.text)
+    st.write("🔍 RESPONSE RAW:", response.text)
 
     if response.status_code != 200:
         return {"error": response.text}
@@ -55,7 +55,7 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# CONFIGURACIÓN STREAMLIT (MISMO DISEÑO)
+# CONFIGURACIÓN STREAMLIT (DISEÑO ORIGINAL)
 # ==================================
 st.set_page_config(
     page_title="Predicción de Colesterol",
@@ -69,12 +69,12 @@ st.markdown(
 )
 
 st.markdown(
-    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para obtener estimaciones de colesterol.</p>",
+    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para obtener estimaciones.</p>",
     unsafe_allow_html=True
 )
 
 # ==================================
-# ENTRADA MANUAL (MISMO DISEÑO)
+# ENTRADA MANUAL (DISEÑO ORIGINAL)
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
@@ -120,7 +120,7 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# RESULTADO MANUAL (MISMO DISEÑO)
+# RESULTADO MANUAL (CORREGIDO)
 # ==================================
 col1, col2 = st.columns([2, 1])
 
@@ -140,33 +140,25 @@ with col2:
             fila = resultado.get("data", [{}])[0]
 
             pred = fila.get("prediction")
+            probs = fila.get("predictionValues", [])
 
-            try:
-                pred_num = float(pred)
-            except:
-                pred_num = None
+            prob_riesgo = None
+            for p in probs:
+                if str(p.get("label")) in ["1", "1.0", 1]:
+                    prob_riesgo = p.get("value")
 
-            st.subheader("Resultado")
+            st.subheader("Resultado del modelo")
 
-            if pred_num is not None:
-                st.metric("Colesterol Estimado", f"{pred_num:.2f} mg/dL")
+            st.metric("Clase predicha", str(pred))
 
-                if pred_num < 200:
-                    st.success("✅ Nivel deseable")
-                elif pred_num < 240:
-                    st.warning("⚠️ Nivel límite alto")
-                else:
-                    st.error("❌ Nivel alto")
+            if prob_riesgo is not None:
+                st.progress(float(prob_riesgo))
+                st.write(f"Probabilidad de riesgo: {prob_riesgo:.2%}")
 
+            if pred == 1:
+                st.error("❌ Riesgo alto de colesterol / cardiovascular")
             else:
-                pred_alt = fila.get("predictionValues", [{}])[0].get("value")
-
-                st.metric("Resultado", str(pred_alt))
-
-                if str(pred_alt) in ["1", "Yes", "True"]:
-                    st.error("❌ Riesgo alto")
-                else:
-                    st.success("✅ Nivel controlado")
+                st.success("✅ Riesgo controlado")
 
 # ==================================
 # PREDICCIONES EN LOTE (MISMO DISEÑO)
@@ -191,19 +183,23 @@ if archivo_csv is not None:
         else:
 
             predicciones = []
+            probabilidades = []
 
             for fila in resultado.get("data", []):
 
                 pred = fila.get("prediction")
+                probs = fila.get("predictionValues", [])
 
-                try:
-                    pred = float(pred)
-                except:
-                    pred = fila.get("predictionValues", [{}])[0].get("value")
+                prob_riesgo = None
+                for p in probs:
+                    if str(p.get("label")) in ["1", "1.0", 1]:
+                        prob_riesgo = p.get("value")
 
                 predicciones.append(pred)
+                probabilidades.append(prob_riesgo)
 
-            datos_csv["colesterol_estimado"] = predicciones
+            datos_csv["riesgo_predicho"] = predicciones
+            datos_csv["probabilidad_riesgo"] = probabilidades
 
             st.success("✅ Predicciones generadas correctamente")
             st.dataframe(datos_csv, use_container_width=True)
@@ -211,7 +207,7 @@ if archivo_csv is not None:
             st.download_button(
                 label="⬇️ Descargar resultados",
                 data=datos_csv.to_csv(index=False).encode("utf-8"),
-                file_name="resultados_colesterol.csv",
+                file_name="resultados_riesgo.csv",
                 mime="text/csv"
             )
 
