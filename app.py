@@ -18,9 +18,6 @@ headers = {
 def hacer_prediccion(df):
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
-    # ==================================
-    # MAPEO EXACTO SEGÚN MODELO DATAROBOT
-    # ==================================
     df = df.rename(columns={
         "id_paciente": "id",
         "edad_dias": "age",
@@ -45,6 +42,7 @@ def hacer_prediccion(df):
         return {"error": response.text}
 
     return response.json()
+
 
 # ==================================
 # CONFIGURACIÓN STREAMLIT
@@ -91,6 +89,7 @@ genero = 1 if genero == "Masculino" else 0
 fuma = 1 if fuma == "Sí" else 0
 consume_alcohol = 1 if consume_alcohol == "Sí" else 0
 enfermedad_cardiovascular = 1 if enfermedad_cardiovascular == "Sí" else 0
+
 actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
 actividad_fisica = actividad_map[actividad_fisica]
 
@@ -128,22 +127,35 @@ with col2:
         else:
             fila = resultado.get("data", [{}])[0]
 
-            prediccion = (
-                fila.get("prediction")
-                or fila.get("predictionValues", [{}])[0].get("value")
-            )
+            pred = fila.get("prediction")
 
-            if prediccion is not None:
-                st.metric("Colesterol Estimado", f"{prediccion:.2f} mg/dL")
+            # Intentar convertir a número (regresión)
+            try:
+                pred_num = float(pred)
+            except:
+                pred_num = None
 
-                if prediccion < 200:
+            st.subheader("Resultado")
+
+            if pred_num is not None:
+                st.metric("Colesterol Estimado", f"{pred_num:.2f} mg/dL")
+
+                if pred_num < 200:
                     st.success("✅ Nivel deseable")
-                elif prediccion < 240:
+                elif pred_num < 240:
                     st.warning("⚠️ Nivel límite alto")
                 else:
                     st.error("❌ Nivel alto")
             else:
-                st.error("No se encontró la predicción en la respuesta.")
+                # Clasificación
+                pred_alt = fila.get("predictionValues", [{}])[0].get("value")
+
+                st.metric("Resultado", str(pred_alt))
+
+                if str(pred_alt) in ["1", "Yes", "True", "Alto"]:
+                    st.error("❌ Riesgo alto")
+                else:
+                    st.success("✅ Nivel controlado")
 
 # ==================================
 # PREDICCIONES EN LOTE
@@ -167,10 +179,13 @@ if archivo_csv is not None:
             predicciones = []
 
             for fila in resultado.get("data", []):
-                pred = (
-                    fila.get("prediction")
-                    or fila.get("predictionValues", [{}])[0].get("value")
-                )
+                pred = fila.get("prediction")
+
+                try:
+                    pred = float(pred)
+                except:
+                    pred = fila.get("predictionValues", [{}])[0].get("value")
+
                 predicciones.append(pred)
 
             datos_csv["colesterol_estimado"] = predicciones
