@@ -24,7 +24,7 @@ def hacer_prediccion(df):
 
     df = df.copy()
 
-    # 🔥 MAPEO CORRECTO DATAROBOT
+    # 🔥 MAPEO CORRECTO DATAROBOT (OBLIGATORIO)
     df = df.rename(columns={
         "edad_dias": "age",
         "genero": "gender",
@@ -44,7 +44,7 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG (puedes quitarlo en producción)
+    # Debug útil
     st.write("🔍 STATUS:", response.status_code)
     st.write("🔍 RESPONSE:", response.text)
 
@@ -55,7 +55,7 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# UI STREAMLIT (MISMO DISEÑO ORIGINAL)
+# CONFIGURACIÓN STREAMLIT (DISEÑO ORIGINAL)
 # ==================================
 st.set_page_config(
     page_title="Predicción de Riesgo Cardiovascular",
@@ -166,7 +166,7 @@ with col2:
                 st.markdown("✅ Interpretación clínica: paciente con riesgo controlado según el modelo.")
 
 # ==================================
-# PREDICCIÓN CSV (DISEÑO ORIGINAL)
+# PREDICCIÓN EN LOTE (DISEÑO ORIGINAL)
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
