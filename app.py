@@ -15,24 +15,38 @@ headers = {
     "Content-Type": "application/json"
 }
 
+# ==================================
+# FUNCIÓN PREDICCIÓN (CORREGIDA)
+# ==================================
 def hacer_prediccion(df):
 
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
     df = df.copy()
 
-    # ==================================
-    # IMPORTANTE:
-    # NO renombramos columnas sin confirmar schema del deployment
-    # ==================================
+    # 🔥 MAPEO CORRECTO (OBLIGATORIO SEGÚN ERROR DATAROBOT)
+    df = df.rename(columns={
+        "edad_dias": "age",
+        "genero": "gender",
+        "estatura_cm": "height",
+        "peso_kg": "weight",
+        "presion_sistolica": "ap_hi",
+        "presion_diastolica": "ap_lo",
+        "colesterol": "cholesterol",
+        "glucosa": "gluc",
+        "fuma": "smoke",
+        "consume_alcohol": "alco",
+        "actividad_fisica": "active",
+        "enfermedad_cardiovascular": "cardio"
+    })
 
     datos = df.to_dict(orient="records")
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG CRÍTICO (te ayuda a detectar fallback)
+    # DEBUG (solo para evitar errores silenciosos)
     st.write("🔍 STATUS:", response.status_code)
-    st.write("🔍 RESPONSE RAW:", response.text)
+    st.write("🔍 RESPONSE:", response.text)
 
     if response.status_code != 200:
         return {"error": response.text}
@@ -41,7 +55,7 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# CONFIGURACIÓN STREAMLIT
+# CONFIGURACIÓN STREAMLIT (MISMO DISEÑO)
 # ==================================
 st.set_page_config(
     page_title="Predicción de Colesterol",
@@ -60,7 +74,7 @@ st.markdown(
 )
 
 # ==================================
-# ENTRADA MANUAL
+# ENTRADA MANUAL (MISMO DISEÑO)
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
@@ -79,7 +93,7 @@ enfermedad_cardiovascular = st.sidebar.selectbox("¿Enfermedad Cardiovascular?",
 colesterol = st.sidebar.selectbox("Colesterol (input modelo)", [1, 2, 3])
 
 # ==================================
-# CODIFICACIÓN (SOLO SI TU MODELO LO REQUIERE)
+# CODIFICACIÓN
 # ==================================
 genero = 1 if genero == "Masculino" else 0
 fuma = 1 if fuma == "Sí" else 0
@@ -106,7 +120,7 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# RESULTADO MANUAL
+# RESULTADO MANUAL (MISMO DISEÑO)
 # ==================================
 col1, col2 = st.columns([2, 1])
 
@@ -122,11 +136,11 @@ with col2:
         if "error" in resultado:
             st.error(resultado["error"])
         else:
+
             fila = resultado.get("data", [{}])[0]
 
             pred = fila.get("prediction")
 
-            # intentar convertir a número
             try:
                 pred_num = float(pred)
             except:
@@ -155,7 +169,7 @@ with col2:
                     st.success("✅ Nivel controlado")
 
 # ==================================
-# PREDICCIONES EN LOTE
+# PREDICCIONES EN LOTE (MISMO DISEÑO)
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
