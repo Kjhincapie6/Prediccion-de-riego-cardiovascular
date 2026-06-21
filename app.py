@@ -11,24 +11,39 @@ DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
 HOST = os.getenv("DATAROBOT_HOST")
 
 headers = {
-    "Authorization": f"Token {API_KEY}",  # usa Token en lugar de Bearer
+    "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
 
 def hacer_prediccion(datos):
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
-    response = requests.post(url, headers=headers, json={"data": datos})
+
+    # DataRobot exige ARRAY DE OBJETOS directamente
+    response = requests.post(url, headers=headers, json=datos)
+
     if response.status_code != 200:
         return {"error": response.text}
+
     return response.json()
 
 # ==================================
 # CONFIGURACIÓN STREAMLIT
 # ==================================
-st.set_page_config(page_title="Predicción de Colesterol", page_icon="🩺", layout="wide")
+st.set_page_config(
+    page_title="Predicción de Colesterol",
+    page_icon="🩺",
+    layout="wide"
+)
 
-st.markdown("<h1 style='text-align: center; color: #2E86C1;'>🩺 Predictor de Colesterol</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para obtener estimaciones de colesterol.</p>", unsafe_allow_html=True)
+st.markdown(
+    "<h1 style='text-align: center; color: #2E86C1;'>🩺 Predictor de Colesterol</h1>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para obtener estimaciones de colesterol.</p>",
+    unsafe_allow_html=True
+)
 
 # ==================================
 # ENTRADA MANUAL
@@ -47,7 +62,12 @@ fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
 enfermedad_cardiaca = st.sidebar.selectbox("¿Enfermedad Cardíaca?", ["No", "Sí"])
-indice_masa_corporal = st.sidebar.number_input("IMC", min_value=10.0, max_value=60.0, value=24.5)
+indice_masa_corporal = st.sidebar.number_input(
+    "IMC",
+    min_value=10.0,
+    max_value=60.0,
+    value=24.5
+)
 
 # Codificación
 genero = 1 if genero == "Masculino" else 0
@@ -72,8 +92,11 @@ datos_manual = pd.DataFrame([{
     "indice_masa_corporal": indice_masa_corporal
 }])
 
-# Mostrar datos y predicción manual
+# ==================================
+# RESULTADO MANUAL
+# ==================================
 col1, col2 = st.columns([2, 1])
+
 with col1:
     st.subheader("Variables ingresadas (manual)")
     st.dataframe(datos_manual, use_container_width=True)
@@ -81,12 +104,20 @@ with col1:
 with col2:
     if st.button("🔍 Predecir Colesterol (manual)", key="btn_manual"):
         resultado = hacer_prediccion(datos_manual.to_dict(orient="records"))
+
         if "error" in resultado:
             st.error(f"Error en la predicción: {resultado['error']}")
         else:
-            prediccion = resultado.get("data", [{}])[0].get("prediction", None)
+            fila = resultado.get("data", [{}])[0]
+
+            prediccion = (
+                fila.get("prediction")
+                or fila.get("predictionValues", [{}])[0].get("value")
+            )
+
             if prediccion is not None:
                 st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
+
                 if prediccion < 200:
                     st.success("✅ Nivel deseable")
                 elif prediccion < 240:
@@ -94,34 +125,41 @@ with col2:
                 else:
                     st.error("❌ Nivel alto")
             else:
-                st.error("No se encontró la clave 'prediction' en la respuesta.")
+                st.error("No se encontró la predicción en la respuesta.")
 
 # ==================================
-# PREDICCIONES EN LOTE DESDE CSV
+# PREDICCIONES EN LOTE
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
-archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
+
+archivo_csv = st.file_uploader(
+    "Suba un archivo CSV con datos de pacientes",
+    type=["csv"]
+)
 
 if archivo_csv is not None:
     datos_csv = pd.read_csv(archivo_csv)
+
     st.write("Datos cargados:")
     st.dataframe(datos_csv.head(), use_container_width=True)
 
     if st.button("🔍 Predecir desde CSV", key="btn_csv"):
         resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
+
         if "error" in resultado:
             st.error(f"Error en la predicción: {resultado['error']}")
         else:
             predicciones = []
+
             for fila in resultado.get("data", []):
-                if "prediction" in fila:
-                    predicciones.append(fila["prediction"])
-                elif "predictions" in fila:
-                    predicciones.append(fila["predictions"][0].get("value", None))
-                else:
-                    predicciones.append(None)
+                pred = (
+                    fila.get("prediction")
+                    or fila.get("predictionValues", [{}])[0].get("value")
+                )
+                predicciones.append(pred)
 
             datos_csv["colesterol_estimado"] = predicciones
+
             st.success("✅ Predicciones generadas correctamente")
             st.dataframe(datos_csv, use_container_width=True)
 
