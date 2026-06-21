@@ -11,7 +11,7 @@ DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
 HOST = os.getenv("DATAROBOT_HOST")
 
 headers = {
-    "Authorization": f"Token {API_KEY}",  # usa Token en lugar de Bearer
+  "Authorization": f"Bearer {API_KEY}",  # usa Token en lugar de Bearer
     "Content-Type": "application/json"
 }
 
