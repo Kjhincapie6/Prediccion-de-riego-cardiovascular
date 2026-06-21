@@ -317,4 +317,6 @@ LinkedIn Profesional
 # FOOTER
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo predictivo de riesgo cardiovascular basado en técnicas de Machine Learning para clasificación binaria, entrenado con variables clínicas y hábitos de vida. La solución fue desplegada mediante DataRobot y consumida a través de una aplicación interactiva desarrollada en Streamlit Cloud")
+st.caption("✨Modelo predictivo de riesgo cardiovascular basado en técnicas de Machine Learning para clasificación binaria, entrenado con variables clínicas y hábitos de vida. La solución 
+            fue desplegada mediante DataRobot y consumida a través de una aplicación interactiva
+            desarrollada en Streamlit Cloud")
