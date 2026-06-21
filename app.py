@@ -14,6 +14,7 @@ HOST = "https://app.datarobot.com"
 headers = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
+}
 
 data = {"data":[{"edad_anhos":30,"peso_kg":70,"estatura_cm":170}]}
 resp = requests.post(url, headers=headers, json=data)
