@@ -16,6 +16,10 @@ headers = {
     "Content-Type": "application/json"
 }
 
+resp = requests.post(url, headers=headers, json=data)
+
+st.write(resp.text)
+
 data = {"data":[{"edad_anhos":30,"peso_kg":70,"estatura_cm":170}]}
 resp = requests.post(url, headers=headers, json=data)
 
