@@ -16,12 +16,6 @@ headers = {
 }
 
 # ==================================
-# HISTORIAL EN SESIÓN
-# ==================================
-if "historial" not in st.session_state:
-    st.session_state.historial = []
-
-# ==================================
 # FUNCIÓN DE PREDICCIÓN
 # ==================================
 def hacer_prediccion(df):
@@ -30,6 +24,7 @@ def hacer_prediccion(df):
 
     df = df.copy()
 
+    # 🔥 MAPEO CORRECTO DATAROBOT (OBLIGATORIO)
     df = df.rename(columns={
         "edad_dias": "age",
         "genero": "gender",
@@ -49,12 +44,9 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    with st.expander("🔧 Debug técnico"):
-        st.code(f"STATUS: {response.status_code}")
-        try:
-            st.json(response.json())
-        except Exception:
-            st.text(response.text)
+    # Debug útil
+    st.write("🔍 STATUS:", response.status_code)
+    st.write("🔍 RESPONSE:", response.text)
 
     if response.status_code != 200:
         return {"error": response.text}
@@ -63,69 +55,84 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# UI GENERAL
+# CONFIGURACIÓN STREAMLIT (DISEÑO ORIGINAL)
 # ==================================
 st.set_page_config(
-    page_title="Riesgo Cardiovascular PRO",
+    page_title="Predicción de Riesgo Cardiovascular",
     page_icon="🩺",
     layout="wide"
 )
 
 st.markdown(
-    "<h1 style='text-align:center;color:#2E86C1;'>🩺 Predictor de Riesgo Cardiovascular PRO</h1>",
+    "<h1 style='text-align: center; color: #2E86C1;'>🩺 Predictor de Riesgo Cardiovascular</h1>",
     unsafe_allow_html=True
 )
 
 st.markdown(
-    "<p style='text-align:center;'>Dashboard analítico conectado a DataRobot</p>",
+    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para estimar el riesgo cardiovascular.</p>",
     unsafe_allow_html=True
 )
 
-tabs = st.tabs(["🧍 Manual", "📂 CSV", "📊 Métricas"])
+# ==================================
+# ENTRADA MANUAL (SIDEBAR ORIGINAL)
+# ==================================
+st.markdown("### ✍️ Entrada Manual")
+st.sidebar.header("Datos del Paciente")
+
+genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
+edad_dias = st.sidebar.slider("Edad (días)", 6570, 36500, 15000)
+estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
+peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
+presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
+presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
+glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
+fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
+consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
+actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
+enfermedad_cardiovascular = st.sidebar.selectbox("¿Enfermedad Cardiovascular?", ["No", "Sí"])
+colesterol = st.sidebar.selectbox("Colesterol (input modelo)", [1, 2, 3])
 
 # ==================================
-# TAB 1 - MANUAL
+# CODIFICACIÓN
 # ==================================
-with tabs[0]:
+genero = 1 if genero == "Masculino" else 0
+fuma = 1 if fuma == "Sí" else 0
+consume_alcohol = 1 if consume_alcohol == "Sí" else 0
+enfermedad_cardiovascular = 1 if enfermedad_cardiovascular == "Sí" else 0
 
-    st.sidebar.header("Datos del Paciente")
+actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
+actividad_fisica = actividad_map[actividad_fisica]
 
-    genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
-    edad_dias = st.sidebar.slider("Edad (días)", 6570, 36500, 15000)
-    estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
-    peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
-    presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
-    presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
-    glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
+# ==================================
+# DATAFRAME MANUAL
+# ==================================
+datos_manual = pd.DataFrame([{
+    "id_paciente": 1,
+    "edad_dias": edad_dias,
+    "genero": genero,
+    "estatura_cm": estatura_cm,
+    "peso_kg": peso_kg,
+    "presion_sistolica": presion_sistolica,
+    "presion_diastolica": presion_diastolica,
+    "colesterol": colesterol,
+    "glucosa": glucosa,
+    "fuma": fuma,
+    "consume_alcohol": consume_alcohol,
+    "actividad_fisica": actividad_fisica,
+    "enfermedad_cardiovascular": enfermedad_cardiovascular
+}])
 
-    fuma = st.sidebar.selectbox("Fuma", ["No", "Sí"])
-    alcohol = st.sidebar.selectbox("Alcohol", ["No", "Sí"])
-    actividad = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
-    colesterol = st.sidebar.selectbox("Colesterol", [1, 2, 3])
+# ==================================
+# RESULTADO MANUAL (DISEÑO ORIGINAL)
+# ==================================
+col1, col2 = st.columns([2, 1])
 
-    genero = 1 if genero == "Masculino" else 0
-    fuma = 1 if fuma == "Sí" else 0
-    alcohol = 1 if alcohol == "Sí" else 0
-    actividad = {"Baja": 0, "Media": 1, "Alta": 2}[actividad]
+with col1:
+    st.subheader("Variables ingresadas (manual)")
+    st.dataframe(datos_manual, use_container_width=True)
 
-    datos_manual = pd.DataFrame([{
-        "id_paciente": 1,
-        "edad_dias": edad_dias,
-        "genero": genero,
-        "estatura_cm": estatura_cm,
-        "peso_kg": peso_kg,
-        "presion_sistolica": presion_sistolica,
-        "presion_diastolica": presion_diastolica,
-        "colesterol": colesterol,
-        "glucosa": glucosa,
-        "fuma": fuma,
-        "consume_alcohol": alcohol,
-        "actividad_fisica": actividad
-    }])
-
-    st.dataframe(datos_manual, use_container_width=True, hide_index=True)
-
-    if st.button("🔍 Predecir"):
+with col2:
+    if st.button("🔍 Predecir Riesgo", key="btn_manual"):
 
         resultado = hacer_prediccion(datos_manual)
 
@@ -134,101 +141,83 @@ with tabs[0]:
         else:
 
             fila = resultado["data"][0]
+
             pred = fila["prediction"]
-
             probs = fila.get("predictionValues", [])
-            prob = max(probs, key=lambda x: x.get("value", 0)).get("value", 0)
 
-            st.metric("Riesgo", str(pred))
-            st.progress(prob)
+            prob_riesgo = None
+            for p in probs:
+                if str(p.get("label")) in ["1", "1.0", 1]:
+                    prob_riesgo = p.get("value")
 
-            st.write(f"Probabilidad: {prob:.2%}")
+            st.subheader("Resultado del modelo")
 
-            st.session_state.historial.append({
-                "tipo": "manual",
-                "prediccion": pred,
-                "probabilidad": prob
-            })
+            st.metric("Clase de riesgo", str(pred))
 
+            if prob_riesgo is not None:
+                st.progress(float(prob_riesgo))
+                st.write(f"📊 Probabilidad de riesgo: {prob_riesgo:.2%}")
 
-# ==================================
-# TAB 2 - CSV
-# ==================================
-with tabs[1]:
-
-    archivo = st.file_uploader("Sube CSV", type=["csv"])
-
-    if archivo:
-
-        df = pd.read_csv(archivo)
-        st.dataframe(df.head(), hide_index=True)
-
-        if st.button("Predecir CSV"):
-
-            resultado = hacer_prediccion(df)
-
-            if "error" in resultado:
-                st.error(resultado["error"])
+            if pred == 1:
+                st.error("🔴 Alto riesgo cardiovascular")
+                st.markdown("⚠️ Interpretación clínica: paciente con riesgo elevado según el modelo.")
             else:
-
-                preds = []
-
-                for r in resultado["data"]:
-                    pred = r["prediction"]
-                    probs = r.get("predictionValues", [])
-                    prob = max(probs, key=lambda x: x.get("value", 0)).get("value", 0)
-
-                    preds.append(prob)
-
-                    st.session_state.historial.append({
-                        "tipo": "csv",
-                        "prediccion": pred,
-                        "probabilidad": prob
-                    })
-
-                df["riesgo"] = preds
-
-                st.success("Predicciones generadas")
-                st.dataframe(df, hide_index=True)
-
-                st.download_button(
-                    "Descargar",
-                    df.to_csv(index=False).encode("utf-8"),
-                    "resultados.csv"
-                )
-
+                st.success("🟢 Bajo riesgo cardiovascular")
+                st.markdown("✅ Interpretación clínica: paciente con riesgo controlado según el modelo.")
 
 # ==================================
-# TAB 3 - MÉTRICAS
+# PREDICCIÓN EN LOTE (DISEÑO ORIGINAL)
 # ==================================
-with tabs[2]:
+st.markdown("### 📂 Predicciones en Lote")
 
-    st.subheader("📊 KPIs del modelo")
+archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
 
-    historial = pd.DataFrame(st.session_state.historial)
+if archivo_csv is not None:
 
-    if len(historial) > 0:
+    datos_csv = pd.read_csv(archivo_csv)
 
-        st.metric("Predicciones totales", len(historial))
+    st.write("Datos cargados:")
+    st.dataframe(datos_csv.head(), use_container_width=True)
 
-        st.metric(
-            "Riesgo promedio",
-            f"{historial['probabilidad'].mean():.2%}"
-        )
+    if st.button("🔍 Predecir desde CSV", key="btn_csv"):
 
-        st.metric(
-            "Casos alto riesgo",
-            int((historial["probabilidad"] > 0.5).sum())
-        )
+        resultado = hacer_prediccion(datos_csv)
 
-        st.dataframe(historial, hide_index=True)
+        if "error" in resultado:
+            st.error(resultado["error"])
+        else:
 
-    else:
-        st.info("Aún no hay predicciones registradas")
+            predicciones = []
+            probabilidades = []
 
+            for fila in resultado["data"]:
+
+                pred = fila["prediction"]
+                probs = fila.get("predictionValues", [])
+
+                prob_riesgo = None
+                for p in probs:
+                    if str(p.get("label")) in ["1", "1.0", 1]:
+                        prob_riesgo = p.get("value")
+
+                predicciones.append(pred)
+                probabilidades.append(prob_riesgo)
+
+            datos_csv["riesgo_predicho"] = predicciones
+            datos_csv["probabilidad_riesgo"] = probabilidades
+
+            st.success("✅ Predicciones generadas correctamente")
+            st.dataframe(datos_csv, use_container_width=True)
+
+            st.download_button(
+                label="⬇️ Descargar resultados",
+                data=datos_csv.to_csv(index=False).encode("utf-8"),
+                file_name="resultados_riesgo.csv",
+                mime="text/csv"
+            )
 
 # ==================================
 # FOOTER
 # ==================================
 st.markdown("---")
-st.caption("🩺 Dashboard PRO conectado a DataRobot | Streamlit + ML API")
+st.caption("✨ Modelo predictivo de riesgo cardiovascular conectado a DataRobot + Streamlit")
