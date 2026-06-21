@@ -22,19 +22,21 @@ def hacer_prediccion(df):
 
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
-    df = df.copy()
+   df = df.copy()
 
-    # =========================
-    # FIX CRÍTICO: NORMALIZAR EDAD
-    # =========================
+# =========================
+# FIX CRÍTICO: NORMALIZAR EDAD
+# =========================
+if "edad_dias" not in df.columns:
+
     if "edad_anhios" in df.columns:
         df["edad_dias"] = df["edad_anhios"] * 365
 
     elif "edad_anios" in df.columns:
         df["edad_dias"] = df["edad_anios"] * 365
 
-    elif "edad_dias" not in df.columns:
-        return {"error": "No se encontró columna de edad válida"}
+    else:
+        return {"error": "El archivo CSV no contiene edad válida (edad_anhios o edad_anios)"}
 
     df = df.rename(columns={
         "edad_dias": "age",
