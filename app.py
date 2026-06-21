@@ -4,7 +4,7 @@ import requests
 import os
 
 # ==================================
-# CONFIGURACIÓN API DATAROBOT
+# CONFIGURACIÓN DATAROBOT
 # ==================================
 API_KEY = os.getenv("DATAROBOT_API_KEY")
 DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
@@ -16,13 +16,16 @@ headers = {
 }
 
 # ==================================
-# FUNCIÓN PREDICCIÓN
+# FUNCIÓN DE PREDICCIÓN
 # ==================================
 def hacer_prediccion(df):
+
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
+    df = df.copy()
+
+    # 🔥 MAPEO CORRECTO DATAROBOT (OBLIGATORIO)
     df = df.rename(columns={
-        "id_paciente": "id",
         "edad_dias": "age",
         "genero": "gender",
         "estatura_cm": "height",
@@ -41,13 +44,9 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG SEGURO
-    with st.expander("🔧 Información técnica"):
-        st.code(f"STATUS: {response.status_code}")
-        try:
-            st.json(response.json())
-        except Exception:
-            st.text(response.text)
+    # Debug útil
+    st.write("🔍 STATUS:", response.status_code)
+    st.write("🔍 RESPONSE:", response.text)
 
     if response.status_code != 200:
         return {"error": response.text}
@@ -56,29 +55,28 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# CONFIG STREAMLIT
+# CONFIGURACIÓN STREAMLIT (DISEÑO ORIGINAL)
 # ==================================
 st.set_page_config(
-    page_title="Predicción de Colesterol",
+    page_title="Predicción de Riesgo Cardiovascular",
     page_icon="🩺",
     layout="wide"
 )
 
 st.markdown(
-    "<h1 style='text-align: center; color: #2E86C1;'>🩺 Predictor de Colesterol</h1>",
+    "<h1 style='text-align: center; color: #2E86C1;'>🩺 Predictor de Riesgo Cardiovascular</h1>",
     unsafe_allow_html=True
 )
 
 st.markdown(
-    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para obtener estimaciones de colesterol.</p>",
+    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para estimar el riesgo cardiovascular.</p>",
     unsafe_allow_html=True
 )
 
 # ==================================
-# INPUT MANUAL
+# ENTRADA MANUAL (SIDEBAR ORIGINAL)
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
-
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
@@ -88,7 +86,6 @@ peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
 presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
 glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
-
 fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
@@ -106,6 +103,9 @@ enfermedad_cardiovascular = 1 if enfermedad_cardiovascular == "Sí" else 0
 actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
 actividad_fisica = actividad_map[actividad_fisica]
 
+# ==================================
+# DATAFRAME MANUAL
+# ==================================
 datos_manual = pd.DataFrame([{
     "id_paciente": 1,
     "edad_dias": edad_dias,
@@ -123,51 +123,50 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# RESULTADO MANUAL
+# RESULTADO MANUAL (DISEÑO ORIGINAL)
 # ==================================
 col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("Variables ingresadas (manual)")
-    st.dataframe(
-        datos_manual,
-        use_container_width=True,
-        hide_index=True
-    )
+    st.dataframe(datos_manual, use_container_width=True)
 
 with col2:
-    if st.button("🔍 Predecir Colesterol (manual)", key="btn_manual"):
+    if st.button("🔍 Predecir Riesgo", key="btn_manual"):
 
         resultado = hacer_prediccion(datos_manual)
 
         if "error" in resultado:
-            st.error(f"Error en la predicción: {resultado['error']}")
-
+            st.error(resultado["error"])
         else:
-            fila = resultado.get("data", [{}])[0]
 
-            prediccion = (
-                fila.get("prediction")
-                or fila.get("predictionValues", [{}])[0].get("value")
-            )
+            fila = resultado["data"][0]
 
-            if prediccion is not None:
+            pred = fila["prediction"]
+            probs = fila.get("predictionValues", [])
 
-                st.metric("Colesterol Estimado", f"{prediccion:.2f} mg/dL")
+            prob_riesgo = None
+            for p in probs:
+                if str(p.get("label")) in ["1", "1.0", 1]:
+                    prob_riesgo = p.get("value")
 
-                if prediccion < 200:
-                    st.success("🟢 Nivel deseable")
-                elif prediccion < 240:
-                    st.warning("🟡 Nivel límite alto")
-                else:
-                    st.error("🔴 Nivel alto")
+            st.subheader("Resultado del modelo")
 
+            st.metric("Clase de riesgo", str(pred))
+
+            if prob_riesgo is not None:
+                st.progress(float(prob_riesgo))
+                st.write(f"📊 Probabilidad de riesgo: {prob_riesgo:.2%}")
+
+            if pred == 1:
+                st.error("🔴 Alto riesgo cardiovascular")
+                st.markdown("⚠️ Interpretación clínica: paciente con riesgo elevado según el modelo.")
             else:
-                st.error("No se encontró la predicción en la respuesta.")
-
+                st.success("🟢 Bajo riesgo cardiovascular")
+                st.markdown("✅ Interpretación clínica: paciente con riesgo controlado según el modelo.")
 
 # ==================================
-# PREDICCIÓN EN LOTE
+# PREDICCIÓN EN LOTE (DISEÑO ORIGINAL)
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
@@ -177,51 +176,48 @@ if archivo_csv is not None:
 
     datos_csv = pd.read_csv(archivo_csv)
 
-    st.dataframe(
-        datos_csv.head(),
-        use_container_width=True,
-        hide_index=True
-    )
+    st.write("Datos cargados:")
+    st.dataframe(datos_csv.head(), use_container_width=True)
 
     if st.button("🔍 Predecir desde CSV", key="btn_csv"):
 
         resultado = hacer_prediccion(datos_csv)
 
         if "error" in resultado:
-            st.error(f"Error en la predicción: {resultado['error']}")
-
+            st.error(resultado["error"])
         else:
+
             predicciones = []
+            probabilidades = []
 
-            for fila in resultado.get("data", []):
+            for fila in resultado["data"]:
 
-                pred = (
-                    fila.get("prediction")
-                    or fila.get("predictionValues", [{}])[0].get("value")
-                )
+                pred = fila["prediction"]
+                probs = fila.get("predictionValues", [])
+
+                prob_riesgo = None
+                for p in probs:
+                    if str(p.get("label")) in ["1", "1.0", 1]:
+                        prob_riesgo = p.get("value")
 
                 predicciones.append(pred)
+                probabilidades.append(prob_riesgo)
 
-            datos_csv["colesterol_estimado"] = predicciones
+            datos_csv["riesgo_predicho"] = predicciones
+            datos_csv["probabilidad_riesgo"] = probabilidades
 
             st.success("✅ Predicciones generadas correctamente")
-
-            st.dataframe(
-                datos_csv,
-                use_container_width=True,
-                hide_index=True
-            )
+            st.dataframe(datos_csv, use_container_width=True)
 
             st.download_button(
                 label="⬇️ Descargar resultados",
                 data=datos_csv.to_csv(index=False).encode("utf-8"),
-                file_name="resultados_colesterol.csv",
+                file_name="resultados_riesgo.csv",
                 mime="text/csv"
             )
 
-
 # ==================================
-# PIE DE PÁGINA
+# FOOTER
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo Predictivo conectado a DataRobot y desplegado con Streamlit.")
+st.caption("✨ Modelo predictivo de riesgo cardiovascular conectado a DataRobot + Streamlit")
