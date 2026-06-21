@@ -16,7 +16,7 @@ headers = {
 }
 
 # ==================================
-# FUNCIÓN DE PREDICCIÓN
+# FUNCIÓN DE PREDICCIÓN (LIMPIA)
 # ==================================
 def hacer_prediccion(df):
 
@@ -43,14 +43,7 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # Debug seguro
-    with st.expander("🔧 Información técnica"):
-        st.code(f"STATUS: {response.status_code}")
-        try:
-            st.json(response.json())
-        except Exception:
-            st.text(response.text)
-
+    # solo retorno de error o data (sin UI aquí)
     if response.status_code != 200:
         return {"error": response.text}
 
@@ -84,7 +77,6 @@ st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
 
-# 🔥 CAMBIO PRINCIPAL: edad en años
 edad_anios = st.sidebar.slider("Edad (años)", 18, 100, 40)
 
 estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
@@ -115,10 +107,7 @@ actividad_fisica = actividad_map[actividad_fisica]
 # ==================================
 datos_manual = pd.DataFrame([{
     "id_paciente": 1,
-
-    # 🔥 conversión obligatoria para DataRobot
     "edad_dias": edad_anios * 365,
-
     "genero": genero,
     "estatura_cm": estatura_cm,
     "peso_kg": peso_kg,
@@ -140,7 +129,6 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.subheader("Variables ingresadas (manual)")
 
-    # Mostrar edad en años en UI (más limpio)
     datos_ui = datos_manual.copy()
     datos_ui["edad_anios"] = edad_anios
     datos_ui = datos_ui.drop(columns=["edad_dias"])
@@ -148,6 +136,9 @@ with col1:
     st.dataframe(datos_ui, use_container_width=True, hide_index=True)
 
 with col2:
+
+    debug = st.checkbox("🔧 Mostrar debug técnico")
+
     if st.button("🔍 Predecir Riesgo"):
 
         resultado = hacer_prediccion(datos_manual)
@@ -155,6 +146,9 @@ with col2:
         if "error" in resultado:
             st.error(resultado["error"])
         else:
+
+            if debug:
+                st.json(resultado)
 
             fila = resultado["data"][0]
 
@@ -200,7 +194,6 @@ if archivo_csv is not None:
 
     if st.button("🔍 Predecir desde CSV"):
 
-        # asegurar id si no existe
         if "id_paciente" not in datos_csv.columns:
             datos_csv["id_paciente"] = range(1, len(datos_csv) + 1)
 
@@ -242,8 +235,11 @@ if archivo_csv is not None:
                 file_name="resultados_riesgo.csv",
                 mime="text/csv"
             )
-import streamlit as st
 
+
+# ==================================
+# AUTOR (SE MANTIENE IGUAL)
+# ==================================
 st.markdown("""
 <style>
 .autor-card {
@@ -296,22 +292,13 @@ Especialista en Analítica de Datos | Profesional en Administración Financiera 
 Tecnóloga en Gestión de Redes de Datos
 </div>
 
-
 <div class="autor-info">
+
 <a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
 target="_blank"
-style="
-background:#25D366;
-color:white;
-padding:10px 18px;
-border-radius:8px;
-text-decoration:none;
-font-weight:600;
-margin-right:10px;">
+style="background:#25D366;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;margin-right:10px;">
 💬 WhatsApp Business
 </a>
-
-
 
 🚀 <b>Proyecto:</b> Modelo Predictivo de Riesgo Cardiovascular basado en Machine Learning,
 desplegado en Streamlit Cloud e integrado con DataRobot.
@@ -328,6 +315,7 @@ LinkedIn Profesional
 
 </div>
 """, unsafe_allow_html=True)
+
 
 # ==================================
 # FOOTER
