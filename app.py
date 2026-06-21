@@ -296,7 +296,34 @@ Tecnóloga en Gestión de Redes de Datos
 
 <div class="autor-info">
 
-📞 <b>Contacto:</b> 3015704518<br>
+<div style="margin-top:10px;">
+
+<a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
+target="_blank"
+style="
+background:#25D366;
+color:white;
+padding:10px 18px;
+border-radius:8px;
+text-decoration:none;
+font-weight:600;
+margin-right:10px;">
+💬 WhatsApp Business
+</a>
+
+<a href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/"
+target="_blank"
+style="
+background:#0077B5;
+color:white;
+padding:10px 18px;
+border-radius:8px;
+text-decoration:none;
+font-weight:600;">
+LinkedIn
+</a>
+
+</div>
 
 🚀 <b>Proyecto:</b> Modelo predictivo de riesgo cardiovascular desarrollado 
 mediante técnicas de Machine Learning supervisado para clasificación binaria, entrenado sobre variables
@@ -319,4 +346,10 @@ LinkedIn Profesional
 # FOOTER
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo Predictivo conectado a DataRobot y desplegado con Streamlit.")
+st.caption("""
+✨ Modelo predictivo de riesgo cardiovascular basado en técnicas de Machine Learning para clasificación binaria,
+entrenado con variables clínicas y hábitos de vida.
+
+La solución fue desplegada mediante DataRobot y consumida a través de una aplicación interactiva
+desarrollada en Streamlit Cloud.
+""")
