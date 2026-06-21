@@ -24,7 +24,7 @@ def hacer_prediccion(df):
 
     df = df.copy()
 
-    # 🔥 MAPEO CORRECTO DATAROBOT (OBLIGATORIO)
+    # MAPEO EXACTO MODELO DATAROBOT
     df = df.rename(columns={
         "edad_dias": "age",
         "genero": "gender",
@@ -44,9 +44,13 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # Debug útil
-    st.write("🔍 STATUS:", response.status_code)
-    st.write("🔍 RESPONSE:", response.text)
+    # DEBUG SEGURO (NO ROMPE UI)
+    with st.expander("🔧 Información técnica"):
+        st.code(f"STATUS: {response.status_code}")
+        try:
+            st.json(response.json())
+        except Exception:
+            st.text(response.text)
 
     if response.status_code != 200:
         return {"error": response.text}
@@ -55,7 +59,7 @@ def hacer_prediccion(df):
 
 
 # ==================================
-# CONFIGURACIÓN STREAMLIT (DISEÑO ORIGINAL)
+# CONFIGURACIÓN STREAMLIT
 # ==================================
 st.set_page_config(
     page_title="Predicción de Riesgo Cardiovascular",
@@ -74,7 +78,7 @@ st.markdown(
 )
 
 # ==================================
-# ENTRADA MANUAL (SIDEBAR ORIGINAL)
+# ENTRADA MANUAL (SIDEBAR)
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
@@ -86,6 +90,7 @@ peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
 presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
 glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
+
 fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
@@ -123,13 +128,17 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# RESULTADO MANUAL (DISEÑO ORIGINAL)
+# RESULTADO MANUAL
 # ==================================
 col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("Variables ingresadas (manual)")
-    st.dataframe(datos_manual, use_container_width=True)
+    st.dataframe(
+        datos_manual,
+        use_container_width=True,
+        hide_index=True
+    )
 
 with col2:
     if st.button("🔍 Predecir Riesgo", key="btn_manual"):
@@ -138,6 +147,7 @@ with col2:
 
         if "error" in resultado:
             st.error(resultado["error"])
+
         else:
 
             fila = resultado["data"][0]
@@ -145,10 +155,15 @@ with col2:
             pred = fila["prediction"]
             probs = fila.get("predictionValues", [])
 
+            # PROBABILIDAD ROBUSTA
             prob_riesgo = None
+
             for p in probs:
-                if str(p.get("label")) in ["1", "1.0", 1]:
+                if p.get("label") in [1, "1", 1.0, "1.0"]:
                     prob_riesgo = p.get("value")
+
+            if prob_riesgo is None and len(probs) > 0:
+                prob_riesgo = max(probs, key=lambda x: x.get("value", 0)).get("value")
 
             st.subheader("Resultado del modelo")
 
@@ -165,8 +180,9 @@ with col2:
                 st.success("🟢 Bajo riesgo cardiovascular")
                 st.markdown("✅ Interpretación clínica: paciente con riesgo controlado según el modelo.")
 
+
 # ==================================
-# PREDICCIÓN EN LOTE (DISEÑO ORIGINAL)
+# PREDICCIÓN EN LOTE
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
@@ -176,8 +192,15 @@ if archivo_csv is not None:
 
     datos_csv = pd.read_csv(archivo_csv)
 
-    st.write("Datos cargados:")
-    st.dataframe(datos_csv.head(), use_container_width=True)
+    # ASEGURAR ID
+    if "id_paciente" not in datos_csv.columns:
+        datos_csv["id_paciente"] = range(1, len(datos_csv) + 1)
+
+    st.dataframe(
+        datos_csv.head(),
+        use_container_width=True,
+        hide_index=True
+    )
 
     if st.button("🔍 Predecir desde CSV", key="btn_csv"):
 
@@ -185,6 +208,7 @@ if archivo_csv is not None:
 
         if "error" in resultado:
             st.error(resultado["error"])
+
         else:
 
             predicciones = []
@@ -196,9 +220,13 @@ if archivo_csv is not None:
                 probs = fila.get("predictionValues", [])
 
                 prob_riesgo = None
+
                 for p in probs:
-                    if str(p.get("label")) in ["1", "1.0", 1]:
+                    if p.get("label") in [1, "1", 1.0, "1.0"]:
                         prob_riesgo = p.get("value")
+
+                if prob_riesgo is None and len(probs) > 0:
+                    prob_riesgo = max(probs, key=lambda x: x.get("value", 0)).get("value")
 
                 predicciones.append(pred)
                 probabilidades.append(prob_riesgo)
@@ -207,7 +235,12 @@ if archivo_csv is not None:
             datos_csv["probabilidad_riesgo"] = probabilidades
 
             st.success("✅ Predicciones generadas correctamente")
-            st.dataframe(datos_csv, use_container_width=True)
+
+            st.dataframe(
+                datos_csv,
+                use_container_width=True,
+                hide_index=True
+            )
 
             st.download_button(
                 label="⬇️ Descargar resultados",
@@ -215,6 +248,7 @@ if archivo_csv is not None:
                 file_name="resultados_riesgo.csv",
                 mime="text/csv"
             )
+
 
 # ==================================
 # FOOTER
