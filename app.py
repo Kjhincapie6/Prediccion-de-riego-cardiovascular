@@ -242,7 +242,63 @@ if archivo_csv is not None:
                 file_name="resultados_riesgo.csv",
                 mime="text/csv"
             )
+st.markdown("""
+<style>
+.profile-card {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    padding: 25px;
+    border-radius: 15px;
+    border-left: 6px solid #2563eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-top: 30px;
+}
 
+.profile-name {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1e293b;
+}
+
+.profile-title {
+    font-size: 15px;
+    color: #475569;
+    margin-bottom: 15px;
+}
+
+.profile-contact {
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.8;
+}
+
+.profile-contact a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+}
+</style>
+
+<div class="profile-card">
+    <div class="profile-name">
+        👩‍💻 Kely Jhojana Hincapié Zapata
+    </div>
+
+    <div class="profile-title">
+        Especialista en Analítica de Datos • Profesional en Administración Financiera • Tecnóloga en Gestión de Redes de Datos
+    </div>
+
+    <div class="profile-contact">
+        📱 <b>Móvil:</b> 3015704518 <br>
+        🔗 <b>LinkedIn:</b>
+        <a href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/" target="_blank">
+        Ver perfil profesional
+        </a>
+        <br><br>
+
+        🚀 Desarrolladora del modelo predictivo de riesgo cardiovascular basado en Machine Learning, desplegado mediante Streamlit y servicios cloud.
+    </div>
+</div>
+""", unsafe_allow_html=True)
 # ==================================
 # FOOTER
 # ==================================
