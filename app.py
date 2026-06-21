@@ -16,13 +16,25 @@ headers = {
 }
 
 # ==================================
-# FUNCIÓN DE PREDICCIÓN (LIMPIA)
+# FUNCIÓN DE PREDICCIÓN (CORREGIDA)
 # ==================================
 def hacer_prediccion(df):
 
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
     df = df.copy()
+
+    # =========================
+    # FIX CRÍTICO: NORMALIZAR EDAD
+    # =========================
+    if "edad_anhios" in df.columns:
+        df["edad_dias"] = df["edad_anhios"] * 365
+
+    elif "edad_anios" in df.columns:
+        df["edad_dias"] = df["edad_anios"] * 365
+
+    elif "edad_dias" not in df.columns:
+        return {"error": "No se encontró columna de edad válida"}
 
     df = df.rename(columns={
         "edad_dias": "age",
