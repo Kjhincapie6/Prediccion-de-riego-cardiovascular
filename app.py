@@ -84,7 +84,7 @@ st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
-edad_dias = st.sidebar.slider("Edad (días)", 6570, 36500, 15000)
+edad_anios = st.sidebar.slider("Edad (años)", 18, 100, 40)
 estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
 peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
@@ -113,7 +113,7 @@ actividad_fisica = actividad_map[actividad_fisica]
 # ==================================
 datos_manual = pd.DataFrame([{
     "id_paciente": 1,
-    "edad_dias": edad_dias,
+    "edad_dias": edad_anios * 365,
     "genero": genero,
     "estatura_cm": estatura_cm,
     "peso_kg": peso_kg,
