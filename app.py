@@ -11,8 +11,9 @@ API_KEY = "TU_TOKEN_GENERADO"
 DEPLOYMENT_ID = "6a35a3e185191304741588d4"
 HOST = "https://app.datarobot.com"
 
-headers = {"Authorization": f"Token {API_KEY}", "Content-Type": "application/json"}
-url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
 
 data = {"data":[{"edad_anhos":30,"peso_kg":70,"estatura_cm":170}]}
 resp = requests.post(url, headers=headers, json=data)
