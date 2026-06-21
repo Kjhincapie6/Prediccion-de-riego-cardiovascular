@@ -16,13 +16,30 @@ headers = {
 }
 
 # ==================================
-# FUNCIÓN DE PREDICCIÓN (SIN CAMBIOS)
+# FUNCIÓN DE PREDICCIÓN (CORREGIDA)
 # ==================================
 def hacer_prediccion(df):
 
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
     df = df.copy()
+
+    # =========================
+    # FIX CRÍTICO: NORMALIZAR EDAD
+    # =========================
+   df = df.copy()
+
+# FIX EDAD
+if "edad_dias" not in df.columns:
+
+    if "edad_anhios" in df.columns:
+        df["edad_dias"] = df["edad_anhios"] * 365
+
+    elif "edad_anios" in df.columns:
+        df["edad_dias"] = df["edad_anios"] * 365
+
+    else:
+        return {"error": "El archivo CSV no contiene edad válida"}
 
     df = df.rename(columns={
         "edad_dias": "age",
@@ -69,7 +86,7 @@ st.markdown(
 )
 
 # ==================================
-# ENTRADA MANUAL (SIN CAMBIOS)
+# ENTRADA MANUAL
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
@@ -121,7 +138,7 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# UI RESULTADO (SIN CAMBIOS)
+# UI RESULTADO
 # ==================================
 col1, col2 = st.columns([2, 1])
 
@@ -172,12 +189,14 @@ with col2:
 
             if pred == 1:
                 st.error("🔴 Alto riesgo cardiovascular")
+                st.markdown("⚠️ Interpretación clínica: paciente con riesgo elevado según el modelo.")
             else:
                 st.success("🟢 Bajo riesgo cardiovascular")
+                st.markdown("✅ Interpretación clínica: paciente con riesgo controlado según el modelo.")
 
 
 # ==================================
-# PREDICCIÓN EN LOTE (✔ FIX AQUÍ)
+# PREDICCIÓN EN LOTE
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
@@ -203,22 +222,14 @@ if archivo_csv is not None:
             predicciones = []
             probabilidades = []
 
-            # =========================
-            # FIX CRÍTICO LOTE
-            # =========================
-            for fila in resultado.get("data", []):
+            for fila in resultado["data"]:
 
-                pred = fila.get("prediction")
-
-                if isinstance(pred, dict):
-                    pred = pred.get("value")
-
+                pred = fila["prediction"]
                 probs = fila.get("predictionValues", [])
 
                 prob_riesgo = None
-
                 for p in probs:
-                    if str(p.get("label")).lower() in ["1", "yes", "true"]:
+                    if p.get("label") in [1, "1", 1.0, "1.0"]:
                         prob_riesgo = p.get("value")
 
                 if prob_riesgo is None and len(probs) > 0:
@@ -245,4 +256,91 @@ if archivo_csv is not None:
 # ==================================
 # AUTOR (SIN CAMBIOS VISUALES)
 # ==================================
-st.markdown(""" ... (igual que tu original) ... """)
+st.markdown("""
+<style>
+.autor-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
+    margin-top: 30px;
+}
+
+.autor-nombre {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.autor-profesion {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 15px;
+}
+
+.autor-info {
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.8;
+}
+
+.linkedin-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #0077B5;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-weight: 600;
+}
+</style>
+
+<div class="autor-card">
+
+<div class="autor-nombre">
+Desarrollado por Kely Jhojana Hincapié Zapata
+</div>
+
+<div class="autor-profesion">
+Especialista en Analítica de Datos | Profesional en Administración Financiera |
+Tecnóloga en Gestión de Redes de Datos
+</div>
+
+<div class="autor-info">
+
+<a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
+target="_blank"
+style="background:#25D366;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;margin-right:10px;">
+💬 WhatsApp Business
+</a>
+
+🚀 <b>Proyecto:</b> Modelo Predictivo de Riesgo Cardiovascular basado en Machine Learning,
+desplegado en Streamlit Cloud e integrado con DataRobot.
+
+<br>
+
+<a class="linkedin-btn"
+href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%B3-zapata-502587130/"
+target="_blank">
+LinkedIn Profesional
+</a>
+
+</div>
+
+</div>
+""", unsafe_allow_html=True)
+
+
+# ==================================
+# FOOTER
+# ==================================
+st.markdown("---")
+st.caption("""
+✨ Modelo predictivo de riesgo cardiovascular basado en técnicas de Machine Learning para clasificación binaria,
+entrenado con variables clínicas y hábitos de vida.
+
+La solución fue desplegada mediante DataRobot y consumida a través de una aplicación interactiva
+desarrollada en Streamlit Cloud.
+""")
