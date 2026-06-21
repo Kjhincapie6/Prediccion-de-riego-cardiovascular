@@ -4,7 +4,7 @@ import requests
 import os
 
 # ==================================
-# CONFIGURACIÓN API DATAROBOT
+# CONFIGURACIÓN DATAROBOT
 # ==================================
 API_KEY = os.getenv("DATAROBOT_API_KEY")
 DEPLOYMENT_ID = os.getenv("DATAROBOT_DEPLOYMENT_ID")
@@ -16,7 +16,7 @@ headers = {
 }
 
 # ==================================
-# FUNCIÓN PREDICCIÓN
+# FUNCIÓN DE PREDICCIÓN
 # ==================================
 def hacer_prediccion(df):
 
@@ -44,18 +44,15 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG (importante mientras ajustas)
-    st.write("🔍 STATUS:", response.status_code)
-    st.write("🔍 RESPONSE RAW:", response.text)
-
     if response.status_code != 200:
+        st.write("🔴 ERROR RESPONSE:", response.text)
         return {"error": response.text}
 
     return response.json()
 
 
 # ==================================
-# CONFIGURACIÓN STREAMLIT (DISEÑO ORIGINAL)
+# UI STREAMLIT (DISEÑO ORIGINAL)
 # ==================================
 st.set_page_config(
     page_title="Predicción de Colesterol",
@@ -74,7 +71,7 @@ st.markdown(
 )
 
 # ==================================
-# ENTRADA MANUAL (DISEÑO ORIGINAL)
+# INPUT MANUAL (SIDEBAR ORIGINAL)
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
@@ -103,6 +100,9 @@ enfermedad_cardiovascular = 1 if enfermedad_cardiovascular == "Sí" else 0
 actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
 actividad_fisica = actividad_map[actividad_fisica]
 
+# ==================================
+# DATA MANUAL
+# ==================================
 datos_manual = pd.DataFrame([{
     "id_paciente": 1,
     "edad_dias": edad_dias,
@@ -120,7 +120,7 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# RESULTADO MANUAL (CORREGIDO)
+# RESULTADO MANUAL (DISEÑO ORIGINAL)
 # ==================================
 col1, col2 = st.columns([2, 1])
 
@@ -137,9 +137,9 @@ with col2:
             st.error(resultado["error"])
         else:
 
-            fila = resultado.get("data", [{}])[0]
+            fila = resultado["data"][0]
 
-            pred = fila.get("prediction")
+            pred = fila["prediction"]
             probs = fila.get("predictionValues", [])
 
             prob_riesgo = None
@@ -156,12 +156,12 @@ with col2:
                 st.write(f"Probabilidad de riesgo: {prob_riesgo:.2%}")
 
             if pred == 1:
-                st.error("❌ Riesgo alto de colesterol / cardiovascular")
+                st.error("❌ Alto riesgo cardiovascular (según modelo)")
             else:
-                st.success("✅ Riesgo controlado")
+                st.success("✅ Bajo riesgo cardiovascular (según modelo)")
 
 # ==================================
-# PREDICCIONES EN LOTE (MISMO DISEÑO)
+# PREDICCIÓN CSV (DISEÑO ORIGINAL)
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
@@ -185,9 +185,9 @@ if archivo_csv is not None:
             predicciones = []
             probabilidades = []
 
-            for fila in resultado.get("data", []):
+            for fila in resultado["data"]:
 
-                pred = fila.get("prediction")
+                pred = fila["prediction"]
                 probs = fila.get("predictionValues", [])
 
                 prob_riesgo = None
@@ -212,7 +212,7 @@ if archivo_csv is not None:
             )
 
 # ==================================
-# PIE DE PÁGINA
+# FOOTER
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo Predictivo conectado a DataRobot y desplegado con Streamlit.")
+st.caption("✨ Modelo predictivo conectado a DataRobot + Streamlit")
