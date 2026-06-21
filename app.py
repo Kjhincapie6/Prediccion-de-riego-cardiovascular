@@ -24,7 +24,6 @@ def hacer_prediccion(df):
 
     df = df.copy()
 
-    # MAPEO EXACTO MODELO DATAROBOT
     df = df.rename(columns={
         "edad_dias": "age",
         "genero": "gender",
@@ -44,7 +43,7 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # DEBUG SEGURO (NO ROMPE UI)
+    # Debug seguro
     with st.expander("🔧 Información técnica"):
         st.code(f"STATUS: {response.status_code}")
         try:
@@ -78,13 +77,16 @@ st.markdown(
 )
 
 # ==================================
-# ENTRADA MANUAL (SIDEBAR)
+# ENTRADA MANUAL
 # ==================================
 st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
+
+# 🔥 CAMBIO PRINCIPAL: edad en años
 edad_anios = st.sidebar.slider("Edad (años)", 18, 100, 40)
+
 estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
 peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
@@ -113,7 +115,10 @@ actividad_fisica = actividad_map[actividad_fisica]
 # ==================================
 datos_manual = pd.DataFrame([{
     "id_paciente": 1,
+
+    # 🔥 conversión obligatoria para DataRobot
     "edad_dias": edad_anios * 365,
+
     "genero": genero,
     "estatura_cm": estatura_cm,
     "peso_kg": peso_kg,
@@ -128,26 +133,27 @@ datos_manual = pd.DataFrame([{
 }])
 
 # ==================================
-# RESULTADO MANUAL
+# UI RESULTADO
 # ==================================
 col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("Variables ingresadas (manual)")
-    st.dataframe(
-        datos_manual,
-        use_container_width=True,
-        hide_index=True
-    )
+
+    # Mostrar edad en años en UI (más limpio)
+    datos_ui = datos_manual.copy()
+    datos_ui["edad_anios"] = edad_anios
+    datos_ui = datos_ui.drop(columns=["edad_dias"])
+
+    st.dataframe(datos_ui, use_container_width=True, hide_index=True)
 
 with col2:
-    if st.button("🔍 Predecir Riesgo", key="btn_manual"):
+    if st.button("🔍 Predecir Riesgo"):
 
         resultado = hacer_prediccion(datos_manual)
 
         if "error" in resultado:
             st.error(resultado["error"])
-
         else:
 
             fila = resultado["data"][0]
@@ -155,9 +161,7 @@ with col2:
             pred = fila["prediction"]
             probs = fila.get("predictionValues", [])
 
-            # PROBABILIDAD ROBUSTA
             prob_riesgo = None
-
             for p in probs:
                 if p.get("label") in [1, "1", 1.0, "1.0"]:
                     prob_riesgo = p.get("value")
@@ -192,23 +196,18 @@ if archivo_csv is not None:
 
     datos_csv = pd.read_csv(archivo_csv)
 
-    # ASEGURAR ID
-    if "id_paciente" not in datos_csv.columns:
-        datos_csv["id_paciente"] = range(1, len(datos_csv) + 1)
+    st.dataframe(datos_csv.head(), use_container_width=True, hide_index=True)
 
-    st.dataframe(
-        datos_csv.head(),
-        use_container_width=True,
-        hide_index=True
-    )
+    if st.button("🔍 Predecir desde CSV"):
 
-    if st.button("🔍 Predecir desde CSV", key="btn_csv"):
+        # asegurar id si no existe
+        if "id_paciente" not in datos_csv.columns:
+            datos_csv["id_paciente"] = range(1, len(datos_csv) + 1)
 
         resultado = hacer_prediccion(datos_csv)
 
         if "error" in resultado:
             st.error(resultado["error"])
-
         else:
 
             predicciones = []
@@ -220,7 +219,6 @@ if archivo_csv is not None:
                 probs = fila.get("predictionValues", [])
 
                 prob_riesgo = None
-
                 for p in probs:
                     if p.get("label") in [1, "1", 1.0, "1.0"]:
                         prob_riesgo = p.get("value")
@@ -236,11 +234,7 @@ if archivo_csv is not None:
 
             st.success("✅ Predicciones generadas correctamente")
 
-            st.dataframe(
-                datos_csv,
-                use_container_width=True,
-                hide_index=True
-            )
+            st.dataframe(datos_csv, use_container_width=True, hide_index=True)
 
             st.download_button(
                 label="⬇️ Descargar resultados",
@@ -248,7 +242,6 @@ if archivo_csv is not None:
                 file_name="resultados_riesgo.csv",
                 mime="text/csv"
             )
-
 
 # ==================================
 # FOOTER
