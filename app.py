@@ -317,7 +317,7 @@ desplegado en Streamlit Cloud e integrado con DataRobot.
 <br>
 
 <a class="linkedin-btn"
-href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/#:~:text=www.linkedin.com/in/kely%2Djhojana%2Dhincapi%C3%A9%2Dzapata%2D502587130
+href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%B3-zapata-502587130/"
 target="_blank">
 LinkedIn Profesional
 </a>
