@@ -43,7 +43,6 @@ def hacer_prediccion(df):
 
     response = requests.post(url, headers=headers, json=datos)
 
-    # solo retorno de error o data (sin UI aquí)
     if response.status_code != 200:
         return {"error": response.text}
 
@@ -238,7 +237,7 @@ if archivo_csv is not None:
 
 
 # ==================================
-# AUTOR (SE MANTIENE IGUAL)
+# AUTOR (SIN CAMBIOS VISUALES)
 # ==================================
 st.markdown("""
 <style>
@@ -306,7 +305,7 @@ desplegado en Streamlit Cloud e integrado con DataRobot.
 <br>
 
 <a class="linkedin-btn"
-href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/"
+href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%B3-zapata-502587130/"
 target="_blank">
 LinkedIn Profesional
 </a>
