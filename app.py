@@ -136,6 +136,6 @@ if archivo_csv is not None:
 # PIE DE PÁGINA
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con St
+st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
 
 
