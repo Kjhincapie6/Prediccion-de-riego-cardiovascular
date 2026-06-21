@@ -244,59 +244,73 @@ if archivo_csv is not None:
             )
 st.markdown("""
 <style>
-.profile-card {
-    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-    padding: 25px;
-    border-radius: 15px;
-    border-left: 6px solid #2563eb;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.autor-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
     margin-top: 30px;
 }
 
-.profile-name {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1e293b;
+.autor-nombre {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0F172A;
 }
 
-.profile-title {
-    font-size: 15px;
+.autor-profesion {
+    font-size: 14px;
     color: #475569;
     margin-bottom: 15px;
 }
 
-.profile-contact {
+.autor-info {
     font-size: 14px;
     color: #334155;
     line-height: 1.8;
 }
 
-.profile-contact a {
-    color: #2563eb;
+.linkedin-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #0077B5;
+    color: white !important;
     text-decoration: none;
-    font-weight: bold;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-weight: 600;
 }
 </style>
 
-<div class="profile-card">
-    <div class="profile-name">
-        👩‍💻 Kely Jhojana Hincapié Zapata
-    </div>
+<div class="autor-card">
 
-    <div class="profile-title">
-        Especialista en Analítica de Datos • Profesional en Administración Financiera • Tecnóloga en Gestión de Redes de Datos
-    </div>
+<div class="autor-nombre">
+Desarrollado por Kely Jhojana Hincapié Zapata
+</div>
 
-    <div class="profile-contact">
-        📱 <b>Móvil:</b> 3015704518 <br>
-        🔗 <b>LinkedIn:</b>
-        <a href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/" target="_blank">
-        Ver perfil profesional
-        </a>
-        <br><br>
+<div class="autor-profesion">
+Especialista en Analítica de Datos | Profesional en Administración Financiera |
+Tecnóloga en Gestión de Redes de Datos
+</div>
 
-        🚀 Desarrolladora del modelo predictivo de riesgo cardiovascular basado en Machine Learning, desplegado mediante Streamlit y servicios cloud.
-    </div>
+<div class="autor-info">
+
+📞 <b>Contacto:</b> 3015704518<br>
+
+🚀 <b>Proyecto:</b> Modelo Predictivo de Riesgo Cardiovascular basado en Machine Learning,
+desplegado en Streamlit Cloud e integrado con DataRobot.
+
+<br>
+
+<a class="linkedin-btn"
+href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/"
+target="_blank">
+LinkedIn Profesional
+</a>
+
+</div>
+
 </div>
 """, unsafe_allow_html=True)
 # ==================================
