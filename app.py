@@ -297,8 +297,18 @@ Tecnóloga en Gestión de Redes de Datos
 </div>
 
 <div class="autor-info">
-
-📞 <b>Contacto:</b> 3015704518<br>
+<a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
+target="_blank"
+style="
+background:#25D366;
+color:white;
+padding:10px 18px;
+border-radius:8px;
+text-decoration:none;
+font-weight:600;
+margin-right:10px;">
+💬 WhatsApp Business
+</a>
 
 🚀 <b>Proyecto:</b> Modelo Predictivo de Riesgo Cardiovascular basado en Machine Learning,
 desplegado en Streamlit Cloud e integrado con DataRobot.
