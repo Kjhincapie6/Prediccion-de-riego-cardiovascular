@@ -15,10 +15,30 @@ headers = {
     "Content-Type": "application/json"
 }
 
-def hacer_prediccion(datos):
+def hacer_prediccion(df):
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
 
-    # DataRobot exige ARRAY DE OBJETOS directamente
+    # ==================================
+    # MAPEO EXACTO SEGÚN MODELO DATAROBOT
+    # ==================================
+    df = df.rename(columns={
+        "id_paciente": "id",
+        "edad_dias": "age",
+        "genero": "gender",
+        "estatura_cm": "height",
+        "peso_kg": "weight",
+        "presion_sistolica": "ap_hi",
+        "presion_diastolica": "ap_lo",
+        "colesterol": "cholesterol",
+        "glucosa": "gluc",
+        "fuma": "smoke",
+        "consume_alcohol": "alco",
+        "actividad_fisica": "active",
+        "enfermedad_cardiovascular": "cardio"
+    })
+
+    datos = df.to_dict(orient="records")
+
     response = requests.post(url, headers=headers, json=datos)
 
     if response.status_code != 200:
@@ -52,7 +72,7 @@ st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
-edad_anhos = st.sidebar.slider("Edad", 18, 100, 35)
+edad_dias = st.sidebar.slider("Edad (días)", 6570, 36500, 15000)
 estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
 peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
@@ -61,35 +81,33 @@ glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
 fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
-enfermedad_cardiaca = st.sidebar.selectbox("¿Enfermedad Cardíaca?", ["No", "Sí"])
-indice_masa_corporal = st.sidebar.number_input(
-    "IMC",
-    min_value=10.0,
-    max_value=60.0,
-    value=24.5
-)
+enfermedad_cardiovascular = st.sidebar.selectbox("¿Enfermedad Cardiovascular?", ["No", "Sí"])
+colesterol = st.sidebar.selectbox("Colesterol (input modelo)", [1, 2, 3])
 
-# Codificación
+# ==================================
+# CODIFICACIÓN
+# ==================================
 genero = 1 if genero == "Masculino" else 0
 fuma = 1 if fuma == "Sí" else 0
 consume_alcohol = 1 if consume_alcohol == "Sí" else 0
-enfermedad_cardiaca = 1 if enfermedad_cardiaca == "Sí" else 0
+enfermedad_cardiovascular = 1 if enfermedad_cardiovascular == "Sí" else 0
 actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
 actividad_fisica = actividad_map[actividad_fisica]
 
 datos_manual = pd.DataFrame([{
+    "id_paciente": 1,
+    "edad_dias": edad_dias,
     "genero": genero,
     "estatura_cm": estatura_cm,
     "peso_kg": peso_kg,
     "presion_sistolica": presion_sistolica,
     "presion_diastolica": presion_diastolica,
+    "colesterol": colesterol,
     "glucosa": glucosa,
     "fuma": fuma,
     "consume_alcohol": consume_alcohol,
     "actividad_fisica": actividad_fisica,
-    "enfermedad_cardiaca": enfermedad_cardiaca,
-    "edad_anhos": edad_anhos,
-    "indice_masa_corporal": indice_masa_corporal
+    "enfermedad_cardiovascular": enfermedad_cardiovascular
 }])
 
 # ==================================
@@ -103,7 +121,7 @@ with col1:
 
 with col2:
     if st.button("🔍 Predecir Colesterol (manual)", key="btn_manual"):
-        resultado = hacer_prediccion(datos_manual.to_dict(orient="records"))
+        resultado = hacer_prediccion(datos_manual)
 
         if "error" in resultado:
             st.error(f"Error en la predicción: {resultado['error']}")
@@ -116,7 +134,7 @@ with col2:
             )
 
             if prediccion is not None:
-                st.metric(label="Colesterol Estimado", value=f"{prediccion:.2f} mg/dL")
+                st.metric("Colesterol Estimado", f"{prediccion:.2f} mg/dL")
 
                 if prediccion < 200:
                     st.success("✅ Nivel deseable")
@@ -132,10 +150,7 @@ with col2:
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
 
-archivo_csv = st.file_uploader(
-    "Suba un archivo CSV con datos de pacientes",
-    type=["csv"]
-)
+archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
 
 if archivo_csv is not None:
     datos_csv = pd.read_csv(archivo_csv)
@@ -144,7 +159,7 @@ if archivo_csv is not None:
     st.dataframe(datos_csv.head(), use_container_width=True)
 
     if st.button("🔍 Predecir desde CSV", key="btn_csv"):
-        resultado = hacer_prediccion(datos_csv.to_dict(orient="records"))
+        resultado = hacer_prediccion(datos_csv)
 
         if "error" in resultado:
             st.error(f"Error en la predicción: {resultado['error']}")
@@ -174,5 +189,4 @@ if archivo_csv is not None:
 # PIE DE PÁGINA
 # ==================================
 st.markdown("---")
-st.caption("✨ Modelo Predictivo de Colesterol conectado a DataRobot y desplegado con Streamlit.")
-
+st.caption("✨ Modelo Predictivo conectado a DataRobot y desplegado con Streamlit.")
