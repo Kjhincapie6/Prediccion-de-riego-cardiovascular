@@ -296,6 +296,7 @@ Especialista en Analítica de Datos | Profesional en Administración Financiera 
 Tecnóloga en Gestión de Redes de Datos
 </div>
 
+
 <div class="autor-info">
 <a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
 target="_blank"
@@ -309,6 +310,8 @@ font-weight:600;
 margin-right:10px;">
 💬 WhatsApp Business
 </a>
+
+
 
 🚀 <b>Proyecto:</b> Modelo Predictivo de Riesgo Cardiovascular basado en Machine Learning,
 desplegado en Streamlit Cloud e integrado con DataRobot.
