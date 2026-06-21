@@ -3,6 +3,8 @@ import pandas as pd
 import requests
 import os
 
+st.write(requests)
+
 # ==================================
 # CONFIGURACIÓN API DATAROBOT
 # ==================================
