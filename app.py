@@ -330,18 +330,7 @@ mediante técnicas de Machine Learning supervisado para clasificación binaria, 
 clínicas y hábitos de vida, desplegado en DataRobot y consumido a 
 través de una aplicación interactiva en Streamlit Cloud.
 
-<br>
 
-<a class="linkedin-btn"
-href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/"
-target="_blank">
-LinkedIn Profesional
-</a>
-
-</div>
-
-</div>
-""", unsafe_allow_html=True)
 # ==================================
 # FOOTER
 # ==================================
