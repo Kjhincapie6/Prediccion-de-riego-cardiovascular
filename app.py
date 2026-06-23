@@ -19,22 +19,17 @@ headers = {
 # FUNCIÓN DE PREDICCIÓN (CORREGIDA)
 # ==================================
 def hacer_prediccion(df):
-
     url = f"{HOST}/api/v2/deployments/{DEPLOYMENT_ID}/predictions"
-
     df = df.copy()
 
     # =========================
     # FIX CRÍTICO: NORMALIZAR EDAD
     # =========================
     if "edad_dias" not in df.columns:
-
         if "edad_anhios" in df.columns:
             df["edad_dias"] = df["edad_anhios"] * 365
-
         elif "edad_anios" in df.columns:
-            df["edad_dias"] = df["edad_anios"] * 365
-
+            df["edad_anios"] = df["edad_anios"] * 365
         else:
             return {"error": "El archivo CSV no contiene edad válida (edad_anhios o edad_anios)"}
 
@@ -54,7 +49,6 @@ def hacer_prediccion(df):
     })
 
     datos = df.to_dict(orient="records")
-
     response = requests.post(url, headers=headers, json=datos)
 
     if response.status_code != 200:
@@ -89,9 +83,7 @@ st.markdown("### ✍️ Entrada Manual")
 st.sidebar.header("Datos del Paciente")
 
 genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
-
 edad_anios = st.sidebar.slider("Edad (años)", 18, 100, 40)
-
 estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
 peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
 presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
@@ -102,7 +94,17 @@ fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
 enfermedad_cardiovascular = st.sidebar.selectbox("¿Enfermedad Cardiovascular?", ["No", "Sí"])
-colesterol = st.sidebar.selectbox("Colesterol (input modelo)", [1, 2, 3])
+
+# ========================================================
+# FIX DE UX/UI: MAPEO DE COLESTEROL (Muestra texto, envía número)
+# ========================================================
+colesterol_map = {
+    "Normal": 1,
+    "Por encima de lo normal": 2,
+    "Muy superior a lo normal": 3
+}
+colesterol_visual = st.sidebar.selectbox("Nivel de Colesterol", list(colesterol_map.keys()))
+colesterol_modelo = colesterol_map[colesterol_visual]
 
 # ==================================
 # CODIFICACIÓN
@@ -126,7 +128,7 @@ datos_manual = pd.DataFrame([{
     "peso_kg": peso_kg,
     "presion_sistolica": presion_sistolica,
     "presion_diastolica": presion_diastolica,
-    "colesterol": colesterol,
+    "colesterol": colesterol_modelo,  # Envía el valor numérico (1, 2 o 3) requerido por DataRobot
     "glucosa": glucosa,
     "fuma": fuma,
     "consume_alcohol": consume_alcohol,
@@ -141,30 +143,24 @@ col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("Variables ingresadas (manual)")
-
     datos_ui = datos_manual.copy()
     datos_ui["edad_anios"] = edad_anios
     datos_ui = datos_ui.drop(columns=["edad_dias"])
-
     st.dataframe(datos_ui, use_container_width=True, hide_index=True)
 
 with col2:
-
     debug = st.checkbox("🔧 Mostrar debug técnico")
 
     if st.button("🔍 Predecir Riesgo"):
-
         resultado = hacer_prediccion(datos_manual)
 
         if "error" in resultado:
             st.error(resultado["error"])
         else:
-
             if debug:
                 st.json(resultado)
 
             fila = resultado["data"][0]
-
             pred = fila["prediction"]
             probs = fila.get("predictionValues", [])
 
@@ -177,7 +173,6 @@ with col2:
                 prob_riesgo = max(probs, key=lambda x: x.get("value", 0)).get("value")
 
             st.subheader("Resultado del modelo")
-
             st.metric("Clase de riesgo", str(pred))
 
             if prob_riesgo is not None:
@@ -194,17 +189,13 @@ with col2:
 # PREDICCIÓN EN LOTE
 # ==================================
 st.markdown("### 📂 Predicciones en Lote")
-
 archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
 
 if archivo_csv is not None:
-
     datos_csv = pd.read_csv(archivo_csv)
-
     st.dataframe(datos_csv.head(), use_container_width=True, hide_index=True)
 
     if st.button("🔍 Predecir desde CSV"):
-
         if "id_paciente" not in datos_csv.columns:
             datos_csv["id_paciente"] = range(1, len(datos_csv) + 1)
 
@@ -213,12 +204,10 @@ if archivo_csv is not None:
         if "error" in resultado:
             st.error(resultado["error"])
         else:
-
             predicciones = []
             probabilidades = []
 
             for fila in resultado["data"]:
-
                 pred = fila["prediction"]
                 probs = fila.get("predictionValues", [])
 
@@ -237,7 +226,6 @@ if archivo_csv is not None:
             datos_csv["probabilidad_riesgo"] = probabilidades
 
             st.success("✅ Predicciones generadas correctamente")
-
             st.dataframe(datos_csv, use_container_width=True, hide_index=True)
 
             st.download_button(
@@ -249,7 +237,7 @@ if archivo_csv is not None:
 
 
 # ==================================
-# AUTOR (SIN CAMBIOS VISUALES)
+# AUTOR (CONSOLIDADO)
 # ==================================
 st.markdown("""
 <style>
@@ -293,7 +281,6 @@ st.markdown("""
 </style>
 
 <div class="autor-card">
-
 <div class="autor-nombre">
 Desarrollado por Kely Jhojana Hincapié Zapata
 </div>
@@ -304,7 +291,6 @@ Tecnóloga en Gestión de Redes de Datos
 </div>
 
 <div class="autor-info">
-
 <a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
 target="_blank"
 style="background:#25D366;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;margin-right:10px;">
@@ -315,18 +301,14 @@ style="background:#25D366;color:white;padding:10px 18px;border-radius:8px;text-d
 desplegado en Streamlit Cloud e integrado con DataRobot.
 
 <br>
-
 <a class="linkedin-btn"
 href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/"
 target="_blank">
 LinkedIn Profesional
 </a>
-
 </div>
-
 </div>
 """, unsafe_allow_html=True)
-
 
 # ==================================
 # FOOTER
