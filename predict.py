@@ -377,6 +377,23 @@ function Make-DataRobot-Batch-Prediction {
         write-host "Number of skipped rows:" $prediction_job.skippedRows
         write-host "Results downloaded to:" $output_file
 
+        # Procesamiento de recomendaciones saludables
+        Write-Host "Generando recomendaciones saludables..."
+        $results = Import-Csv -Path $output_file
+        foreach ($row in $results) {
+            $score = [double]$row.prediction 
+            $recomendacion = if ($score -gt 0.7) { 
+                "Riesgo ALTO: Consulte a un cardiólogo urgentemente, reduzca sodio y grasas saturadas." 
+            } elseif ($score -gt 0.4) { 
+                "Riesgo MODERADO: Inicie actividad física regular y mejore su dieta." 
+            } else { 
+                "Riesgo BAJO: Mantenga hábitos saludables y chequeos anuales." 
+            }
+            $row | Add-Member -MemberType NoteProperty -Name "Recomendacion" -Value $recomendacion
+        }
+        $results | Export-Csv -Path $output_file -NoTypeInformation
+        Write-Host "Recomendaciones agregadas al archivo."
+
         return
     }
 
