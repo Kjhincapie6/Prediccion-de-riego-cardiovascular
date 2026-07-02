@@ -187,68 +187,64 @@ with col2:
 # RECOMENDACIONES PERSONALIZADAS
 # ==================================
 
-st.markdown("---")
-st.subheader("❤️ Recomendaciones de Salud")
+sif pred == 1:
+    st.error("🔴 Alto riesgo cardiovascular")
 
-if pred == 1:
+    st.markdown("---")
+    st.subheader("❤️ Recomendaciones Personalizadas")
 
-    st.warning("""
-### ⚠️ El modelo detecta un riesgo cardiovascular elevado.
+    recomendaciones = []
 
-Estas recomendaciones no reemplazan la valoración médica, pero pueden ayudar a disminuir el riesgo.
+    if presion_sistolica >= 140 or presion_diastolica >= 90:
+        recomendaciones.append(
+            "🩺 **Controle su presión arterial.** Sus valores se encuentran elevados y es recomendable consultar a un profesional de la salud."
+        )
 
-✔️ Controle periódicamente su presión arterial.
+    if colesterol_modelo >= 2:
+        recomendaciones.append(
+            "🥗 **Mejore su alimentación.** Reduzca grasas saturadas y aumente el consumo de frutas, verduras y fibra."
+        )
 
-✔️ Consulte a un médico para una evaluación completa.
+    if glucosa >= 126:
+        recomendaciones.append(
+            "🍬 **Controle sus niveles de glucosa.** Es recomendable realizar una valoración médica."
+        )
 
-✔️ Mantenga una alimentación saludable:
-- Más frutas y verduras.
-- Cereales integrales.
-- Reducir alimentos ultraprocesados.
-- Disminuir el consumo de sal y azúcar.
+    if fuma == 1:
+        recomendaciones.append(
+            "🚭 **Deje de fumar.** El tabaquismo incrementa significativamente el riesgo cardiovascular."
+        )
 
-✔️ Realice actividad física al menos 150 minutos por semana.
+    if consume_alcohol == 1:
+        recomendaciones.append(
+            "🍺 **Reduzca el consumo de alcohol.**"
+        )
 
-✔️ Si fuma, considere dejar el cigarrillo.
+    if actividad_fisica == 0:
+        recomendaciones.append(
+            "🏃 **Aumente su actividad física.** Se recomienda al menos 150 minutos de ejercicio moderado por semana."
+        )
 
-✔️ Limite el consumo de alcohol.
+    imc = peso_kg / ((estatura_cm / 100) ** 2)
 
-✔️ Mantenga un peso saludable.
+    if imc >= 25:
+        recomendaciones.append(
+            f"⚖️ **Su IMC es {imc:.1f}.** Se recomienda trabajar en alcanzar un peso saludable."
+        )
 
-✔️ Controle regularmente colesterol y glucosa.
+    for r in recomendaciones:
+        st.write(r)
 
-✔️ Duerma entre 7 y 8 horas diarias.
-
-✔️ Reduzca el estrés mediante caminatas, respiración o actividades recreativas.
-""")
+    st.info(
+        "⚠️ Estas recomendaciones son orientativas y no reemplazan la valoración de un profesional de la salud."
+    )
 
 else:
-
-    st.info("""
-### ✅ El modelo estima un riesgo cardiovascular bajo.
-
-Continúe manteniendo hábitos saludables.
-
-✔️ Realice actividad física regularmente.
-
-✔️ Mantenga una alimentación balanceada.
-
-✔️ Evite fumar.
-
-✔️ Limite el consumo de alcohol.
-
-✔️ Controle su peso.
-
-✔️ Revise periódicamente su presión arterial.
-
-✔️ Realice chequeos médicos preventivos.
-
-✔️ Mantenga buenos hábitos de sueño.
-
-✔️ Controle colesterol y glucosa al menos una vez al año.
-""")
-
-st.caption("ℹ️ Estas recomendaciones son informativas y no sustituyen el diagnóstico o tratamiento realizado por un profesional de la salud.")
+    st.success("🟢 Bajo riesgo cardiovascular")
+    st.balloons()
+    st.info(
+        "🎉 El modelo estima un riesgo cardiovascular bajo. Continúe manteniendo hábitos saludables y realice controles médicos periódicos."
+    )
 
 # ==================================
 # PREDICCIÓN EN LOTE
