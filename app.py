@@ -183,7 +183,72 @@ with col2:
                 st.error("🔴 Alto riesgo cardiovascular")
             else:
                 st.success("🟢 Bajo riesgo cardiovascular")
+# ==================================
+# RECOMENDACIONES PERSONALIZADAS
+# ==================================
 
+st.markdown("---")
+st.subheader("❤️ Recomendaciones de Salud")
+
+if pred == 1:
+
+    st.warning("""
+### ⚠️ El modelo detecta un riesgo cardiovascular elevado.
+
+Estas recomendaciones no reemplazan la valoración médica, pero pueden ayudar a disminuir el riesgo.
+
+✔️ Controle periódicamente su presión arterial.
+
+✔️ Consulte a un médico para una evaluación completa.
+
+✔️ Mantenga una alimentación saludable:
+- Más frutas y verduras.
+- Cereales integrales.
+- Reducir alimentos ultraprocesados.
+- Disminuir el consumo de sal y azúcar.
+
+✔️ Realice actividad física al menos 150 minutos por semana.
+
+✔️ Si fuma, considere dejar el cigarrillo.
+
+✔️ Limite el consumo de alcohol.
+
+✔️ Mantenga un peso saludable.
+
+✔️ Controle regularmente colesterol y glucosa.
+
+✔️ Duerma entre 7 y 8 horas diarias.
+
+✔️ Reduzca el estrés mediante caminatas, respiración o actividades recreativas.
+""")
+
+else:
+
+    st.info("""
+### ✅ El modelo estima un riesgo cardiovascular bajo.
+
+Continúe manteniendo hábitos saludables.
+
+✔️ Realice actividad física regularmente.
+
+✔️ Mantenga una alimentación balanceada.
+
+✔️ Evite fumar.
+
+✔️ Limite el consumo de alcohol.
+
+✔️ Controle su peso.
+
+✔️ Revise periódicamente su presión arterial.
+
+✔️ Realice chequeos médicos preventivos.
+
+✔️ Mantenga buenos hábitos de sueño.
+
+✔️ Controle colesterol y glucosa al menos una vez al año.
+""")
+
+st.caption("ℹ️ Estas recomendaciones son informativas y no sustituyen el diagnóstico o tratamiento realizado por un profesional de la salud.")
 
 # ==================================
 # PREDICCIÓN EN LOTE
