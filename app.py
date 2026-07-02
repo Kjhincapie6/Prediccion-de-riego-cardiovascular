@@ -182,45 +182,45 @@ with col2:
                 st.subheader("❤️ Recomendaciones Saludables")
             
                 st.info("""
- ### Su resultado indica un riesgo cardiovascular elevado.
+            ### Su resultado indica un riesgo cardiovascular elevado.
             
-Adoptar hábitos saludables puede ayudar a reducir el riesgo de enfermedades cardiovasculares.
+            Adoptar hábitos saludables puede ayudar a reducir el riesgo de enfermedades cardiovasculares.
             
-#### 🥗 Alimentación
-- Consuma frutas y verduras diariamente.
-- Prefiera alimentos integrales.
-- Disminuya el consumo de sal, azúcar y grasas saturadas.
-- Evite alimentos ultraprocesados y bebidas azucaradas.
+            #### 🥗 Alimentación
+            - Consuma frutas y verduras diariamente.
+            - Prefiera alimentos integrales.
+            - Disminuya el consumo de sal, azúcar y grasas saturadas.
+            - Evite alimentos ultraprocesados y bebidas azucaradas.
             
-#### 🏃 Actividad física
-- Realice al menos **150 minutos de actividad física moderada por semana**.
-- Caminar 30 minutos al día es un excelente comienzo.
+            #### 🏃 Actividad física
+            - Realice al menos **150 minutos de actividad física moderada por semana**.
+            - Caminar 30 minutos al día es un excelente comienzo.
             
-#### ⚖️ Peso saludable
-- Mantenga un peso adecuado de acuerdo con su estatura.
-- Si presenta sobrepeso, una reducción gradual puede mejorar su salud cardiovascular.
+            #### ⚖️ Peso saludable
+            - Mantenga un peso adecuado de acuerdo con su estatura.
+            - Si presenta sobrepeso, una reducción gradual puede mejorar su salud cardiovascular.
             
- #### 🚭 Hábitos de vida
- - Evite fumar.
- - Limite el consumo de alcohol.
- - Mantenga una adecuada hidratación.
+            #### 🚭 Hábitos de vida
+            - Evite fumar.
+            - Limite el consumo de alcohol.
+            - Mantenga una adecuada hidratación.
             
- #### 🩺 Control médico
- - Controle periódicamente su presión arterial.
- - Revise sus niveles de colesterol y glucosa.
- - Consulte con un profesional de la salud para una valoración integral.
+            #### 🩺 Control médico
+            - Controle periódicamente su presión arterial.
+            - Revise sus niveles de colesterol y glucosa.
+            - Consulte con un profesional de la salud para una valoración integral.
             
-#### 😴 Bienestar
-- Duerma entre 7 y 8 horas cada noche.
-- Reduzca el estrés mediante actividades recreativas, ejercicio o técnicas de relajación.
-""")
+            #### 😴 Bienestar
+            - Duerma entre 7 y 8 horas cada noche.
+            - Reduzca el estrés mediante actividades recreativas, ejercicio o técnicas de relajación.
+            """)
             
-     st.warning(
-        "⚠️ Estas recomendaciones son orientativas y no reemplazan la valoración de un profesional de la salud."
+                st.warning(
+                    "⚠️ Estas recomendaciones son orientativas y no reemplazan la valoración de un profesional de la salud."
                 )
             
-   else:
-      st.success("🟢 Bajo riesgo cardiovascular")           
+            else:
+                st.success("🟢 Bajo riesgo cardiovascular")          
 
 # ==================================
 # PREDICCIÓN EN LOTE
