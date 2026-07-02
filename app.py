@@ -144,15 +144,21 @@ with col1:
     datos_ui = datos_ui.drop(columns=["edad_dias"])
     st.dataframe(datos_ui, use_container_width=True, hide_index=True)
 
+# Variables para mostrar recomendaciones fuera de la columna
+mostrar_recomendaciones = False
+
 with col2:
     debug = st.checkbox("🔧 Mostrar debug técnico")
 
     if st.button("🔍 Predecir Riesgo"):
+
         resultado = hacer_prediccion(datos_manual)
 
         if "error" in resultado:
             st.error(resultado["error"])
+
         else:
+
             if debug:
                 st.json(resultado)
 
@@ -161,12 +167,16 @@ with col2:
             probs = fila.get("predictionValues", [])
 
             prob_riesgo = None
+
             for p in probs:
                 if p.get("label") in [1, "1", 1.0, "1.0"]:
                     prob_riesgo = p.get("value")
 
             if prob_riesgo is None and len(probs) > 0:
-                prob_riesgo = max(probs, key=lambda x: x.get("value", 0)).get("value")
+                prob_riesgo = max(
+                    probs,
+                    key=lambda x: x.get("value", 0)
+                ).get("value")
 
             st.subheader("Resultado del modelo")
             st.metric("Clase de riesgo", str(pred))
@@ -177,50 +187,66 @@ with col2:
 
             if pred == 1:
                 st.error("🔴 Alto riesgo cardiovascular")
-            
-                st.markdown("---")
-                st.subheader("❤️ Recomendaciones Saludables")
-            
-                st.info("""
-            ### Su resultado indica un riesgo cardiovascular elevado.
-            
-            Adoptar hábitos saludables puede ayudar a reducir el riesgo de enfermedades cardiovasculares.
-            
-            #### 🥗 Alimentación
-            - Consuma frutas y verduras diariamente.
-            - Prefiera alimentos integrales.
-            - Disminuya el consumo de sal, azúcar y grasas saturadas.
-            - Evite alimentos ultraprocesados y bebidas azucaradas.
-            
-            #### 🏃 Actividad física
-            - Realice al menos **150 minutos de actividad física moderada por semana**.
-            - Caminar 30 minutos al día es un excelente comienzo.
-            
-            #### ⚖️ Peso saludable
-            - Mantenga un peso adecuado de acuerdo con su estatura.
-            - Si presenta sobrepeso, una reducción gradual puede mejorar su salud cardiovascular.
-            
-            #### 🚭 Hábitos de vida
-            - Evite fumar.
-            - Limite el consumo de alcohol.
-            - Mantenga una adecuada hidratación.
-            
-            #### 🩺 Control médico
-            - Controle periódicamente su presión arterial.
-            - Revise sus niveles de colesterol y glucosa.
-            - Consulte con un profesional de la salud para una valoración integral.
-            
-            #### 😴 Bienestar
-            - Duerma entre 7 y 8 horas cada noche.
-            - Reduzca el estrés mediante actividades recreativas, ejercicio o técnicas de relajación.
-            """)
-            
-                st.warning(
-                    "⚠️ Estas recomendaciones son orientativas y no reemplazan la valoración de un profesional de la salud."
-                )
-            
+                mostrar_recomendaciones = True
             else:
-                st.success("🟢 Bajo riesgo cardiovascular")          
+                st.success("🟢 Bajo riesgo cardiovascular")
+
+# =====================================================
+# RECOMENDACIONES (ANCHO COMPLETO)
+# =====================================================
+
+if mostrar_recomendaciones:
+
+    st.markdown("---")
+
+    izquierda, centro, derecha = st.columns([1, 3, 1])
+
+    with centro:
+
+        st.subheader("❤️ Recomendaciones Saludables")
+
+        with st.container(border=True):
+
+            st.markdown("""
+### 🥗 Alimentación saludable
+
+- Consuma frutas y verduras diariamente.
+- Prefiera alimentos integrales.
+- Reduzca el consumo de sal.
+- Disminuya grasas saturadas y azúcares.
+- Evite alimentos ultraprocesados.
+
+### 🏃 Actividad física
+
+- Realice al menos **150 minutos** de actividad física moderada por semana.
+- Caminar 30 minutos diarios aporta beneficios importantes para el corazón.
+
+### ⚖️ Mantenga un peso saludable
+
+- Controle su peso corporal.
+- Procure mantener un índice de masa corporal adecuado.
+
+### 🚭 Hábitos saludables
+
+- Evite fumar.
+- Limite el consumo de alcohol.
+- Manténgase bien hidratado.
+
+### 🩺 Controles médicos
+
+- Controle periódicamente la presión arterial.
+- Revise colesterol y glucosa.
+- Asista a controles médicos preventivos.
+
+### 😴 Bienestar
+
+- Duerma entre 7 y 8 horas.
+- Reduzca el estrés mediante ejercicio, descanso y actividades recreativas.
+            """)
+
+        st.warning(
+            "⚠️ Estas recomendaciones son informativas y no sustituyen la valoración de un profesional de la salud."
+        )         
 
 # ==================================
 # PREDICCIÓN EN LOTE
