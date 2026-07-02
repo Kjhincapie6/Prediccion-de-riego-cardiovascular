@@ -45,7 +45,6 @@ def hacer_prediccion(df):
         "fuma": "smoke",
         "consume_alcohol": "alco",
         "actividad_fisica": "active",
-        "enfermedad_cardiovascular": "cardio"
     })
 
     datos = df.to_dict(orient="records")
@@ -93,7 +92,6 @@ glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
 fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
 consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
 actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
-enfermedad_cardiovascular = st.sidebar.selectbox("¿Enfermedad Cardiovascular?", ["No", "Sí"])
 
 # ========================================================
 # FIX DE UX/UI: MAPEO DE COLESTEROL (Muestra texto, envía número)
@@ -112,7 +110,6 @@ colesterol_modelo = colesterol_map[colesterol_visual]
 genero = 1 if genero == "Masculino" else 0
 fuma = 1 if fuma == "Sí" else 0
 consume_alcohol = 1 if consume_alcohol == "Sí" else 0
-enfermedad_cardiovascular = 1 if enfermedad_cardiovascular == "Sí" else 0
 
 actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
 actividad_fisica = actividad_map[actividad_fisica]
@@ -133,7 +130,6 @@ datos_manual = pd.DataFrame([{
     "fuma": fuma,
     "consume_alcohol": consume_alcohol,
     "actividad_fisica": actividad_fisica,
-    "enfermedad_cardiovascular": enfermedad_cardiovascular
 }])
 
 # ==================================
