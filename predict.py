@@ -2,24 +2,22 @@
 Modulo de prediccion local para el Predictor de Riesgo Cardiovascular.
 
 Reemplaza la integracion con DataRobot (cuenta vencida / desactivada) por
-un modelo scikit-learn (RandomForestClassifier) entrenado localmente. El
-modelo va empaquetado como texto base64 en model_data.py (en vez de un
-archivo binario model.pkl) para poder subirse desde el editor web de
-GitHub. No requiere API keys, deployment_id ni conexion a ningun servicio
-externo -- el modelo corre dentro de la misma app.
+un modelo scikit-learn (RandomForestClassifier) entrenado localmente y
+empaquetado en model.pkl (archivo binario, subido directamente al repo).
+No requiere API keys, deployment_id ni conexion a ningun servicio externo
+-- el modelo corre dentro de la misma app.
 
 Entrenado con el dataset publico "Cardiovascular Disease dataset"
 (70.000 registros). Accuracy ~0.74 / ROC-AUC ~0.80 en holdout del 20%.
 Ver model_training/train_model.py para el detalle del entrenamiento.
 """
-import base64
-import io
+import os
 import joblib
 import pandas as pd
 
-from model_data import MODEL_B64
+_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pkl")
 
-_bundle = joblib.load(io.BytesIO(base64.b64decode(MODEL_B64)))
+_bundle = joblib.load(_MODEL_PATH)
 _model = _bundle["model"]
 _FEATURE_ORDER = _bundle["feature_order"]
 
