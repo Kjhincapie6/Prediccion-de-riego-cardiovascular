@@ -1,30 +1,4 @@
-"""
-Entrena el modelo local (sin dependencias externas) que reemplaza la
-integracion con DataRobot (cuenta vencida) en el Predictor de Riesgo
-Cardiovascular de Kely Hincapie.
 
-Dataset: "Cardiovascular Disease dataset" (70.000 registros, Kaggle/sulianova),
-el dataset clasico usado para este tipo de proyectos:
-https://www.kaggle.com/datasets/sulianova/cardiovascular-disease-dataset
-
-Uso:
-    python model_training/train_model.py <ruta_a_cardio_train.csv>
-
-Genera ../model.pkl con el modelo entrenado + el orden de columnas que
-espera predict.py.
-
-Codificaciones alineadas con la app de Streamlit existente (para NO tener
-que cambiar la interfaz de usuario):
-  - genero: 1 = Masculino, 0 = Femenino
-            (el dataset original usa 2 = hombre, 1 = mujer -> se remapea)
-  - colesterol: 1 = Normal, 2 = Por encima de lo normal, 3 = Muy superior a lo normal
-                (coincide 1:1 con el dataset)
-  - glucosa: la app la recibe como valor continuo (mg/dL) y se categoriza
-             en tiempo de inferencia (ver predict.py) igual que en el
-             dataset (1 = normal <100, 2 = por encima 100-125, 3 = muy alta >125)
-  - actividad_fisica: la app usa Baja/Media/Alta y se binariza en tiempo de
-                       inferencia (el dataset original es binario activo/inactivo)
-"""
 import sys
 import os
 import numpy as np
