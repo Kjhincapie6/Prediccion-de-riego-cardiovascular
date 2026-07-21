@@ -1,77 +1,376 @@
-import sys
-import os
-import numpy as np
+import streamlit as st
 import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, roc_auc_score, classification_report
-import joblib
 
-RANDOM_STATE = 42
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from predict import predecir
 
+# ==================================
+# FUNCIÓN DE PREDICCIÓN (MODELO LOCAL)
+# ==================================
+# Antes esta función llamaba a un deployment de DataRobot vía API (requería
+# API_KEY / DEPLOYMENT_ID / HOST). Esa cuenta de DataRobot venció y quedó
+# desactivada ("Account is not activated"), así que la predicción ahora se
+# hace con un modelo scikit-learn entrenado localmente (predict.py +
+# model.pkl) que vive dentro de esta misma app: no depende de ninguna
+# cuenta externa, API key ni conexión a internet.
+def hacer_prediccion(df):
+    df = df.copy()
 
-def main():
-    dataset_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(REPO_ROOT, "cardio_train.csv")
-    if not os.path.exists(dataset_path):
-        print(f"No se encontro el dataset en: {dataset_path}")
-        print("Descargalo desde https://www.kaggle.com/datasets/sulianova/cardiovascular-disease-dataset")
-        print("y pasa la ruta como argumento: python model_training/train_model.py ruta/cardio_train.csv")
-        sys.exit(1)
+    # =========================
+    # FIX CRÍTICO: NORMALIZAR EDAD
+    # =========================
+    if "edad_dias" not in df.columns:
+        if "edad_anhios" in df.columns:
+            df["edad_dias"] = df["edad_anhios"] * 365
+        elif "edad_anios" in df.columns:
+            df["edad_dias"] = df["edad_anios"] * 365
+        else:
+            return {"error": "El archivo CSV no contiene edad válida (edad_anhios o edad_anios)"}
 
-    print("Cargando dataset...")
-    df = pd.read_csv(dataset_path, sep=";")
-    print(f"Filas originales: {len(df)}")
+    df = df.rename(columns={
+        "edad_dias": "age",
+        "genero": "gender",
+        "estatura_cm": "height",
+        "peso_kg": "weight",
+        "presion_sistolica": "ap_hi",
+        "presion_diastolica": "ap_lo",
+        "colesterol": "cholesterol",
+        "glucosa": "gluc",
+        "fuma": "smoke",
+        "consume_alcohol": "alco",
+        "actividad_fisica": "active",
+    })
 
-    # -----------------------------------------------------------
-    # Limpieza: eliminar registros fisiologicamente imposibles/erroneos
-    # (practica estandar y documentada para este dataset)
-    # -----------------------------------------------------------
-    df = df[(df["height"] >= 130) & (df["height"] <= 220)]
-    df = df[(df["weight"] >= 30) & (df["weight"] <= 200)]
-    df = df[(df["ap_hi"] >= 80) & (df["ap_hi"] <= 220)]
-    df = df[(df["ap_lo"] >= 50) & (df["ap_lo"] <= 150)]
-    df = df[df["ap_hi"] > df["ap_lo"]]
-    print(f"Filas tras limpieza: {len(df)}")
-
-    # -----------------------------------------------------------
-    # Remapeo de genero para que coincida con la codificacion de la app
-    # -----------------------------------------------------------
-    df["gender"] = np.where(df["gender"] == 2, 1, 0)  # 2=hombre->1, 1=mujer->0
-
-    feature_cols = ["age", "gender", "height", "weight", "ap_hi", "ap_lo",
-                     "cholesterol", "gluc", "smoke", "alco", "active"]
-
-    X = df[feature_cols]
-    y = df["cardio"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
-    )
-
-    print("Entrenando RandomForestClassifier...")
-    model = RandomForestClassifier(
-        n_estimators=150,
-        max_depth=8,
-        min_samples_leaf=25,
-        random_state=RANDOM_STATE,
-        n_jobs=-1,
-    )
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-    y_proba = model.predict_proba(X_test)[:, 1]
-
-    acc = accuracy_score(y_test, y_pred)
-    auc = roc_auc_score(y_test, y_proba)
-    print(f"\nAccuracy: {acc:.4f}")
-    print(f"ROC-AUC: {auc:.4f}")
-    print("\n" + classification_report(y_test, y_pred, target_names=["Sin riesgo", "Con riesgo"]))
-
-    output_path = os.path.join(REPO_ROOT, "model.pkl")
-    joblib.dump({"model": model, "feature_order": feature_cols}, output_path)
-    print(f"\nModelo guardado en {output_path}")
+    try:
+        return predecir(df)
+    except Exception as e:
+        return {"error": str(e)}
 
 
-if __name__ == "__main__":
-    main()
+# ==================================
+# CONFIGURACIÓN STREAMLIT
+# ==================================
+st.set_page_config(
+    page_title="Predicción de Riesgo Cardiovascular",
+    page_icon="🩺",
+    layout="wide"
+)
+
+st.markdown(
+    "<h1 style='text-align: center; color: #2E86C1;'>🩺 Predictor de Riesgo Cardiovascular</h1>",
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "<p style='text-align: center;'>Ingrese los datos del paciente o cargue un archivo CSV para estimar el riesgo cardiovascular.</p>",
+    unsafe_allow_html=True
+)
+
+# ==================================
+# ENTRADA MANUAL
+# ==================================
+st.markdown("### ✍️ Entrada Manual")
+st.sidebar.header("Datos del Paciente")
+
+genero = st.sidebar.selectbox("Género", ["Masculino", "Femenino"])
+edad_anios = st.sidebar.slider("Edad (años)", 18, 100, 40)
+estatura_cm = st.sidebar.slider("Estatura (cm)", 120, 220, 170)
+peso_kg = st.sidebar.slider("Peso (kg)", 30, 200, 70)
+presion_sistolica = st.sidebar.slider("Presión Sistólica", 80, 220, 120)
+presion_diastolica = st.sidebar.slider("Presión Diastólica", 50, 150, 80)
+glucosa = st.sidebar.slider("Glucosa", 50, 300, 100)
+
+fuma = st.sidebar.selectbox("¿Fuma?", ["No", "Sí"])
+consume_alcohol = st.sidebar.selectbox("¿Consume Alcohol?", ["No", "Sí"])
+actividad_fisica = st.sidebar.selectbox("Actividad Física", ["Baja", "Media", "Alta"])
+
+# ========================================================
+# FIX DE UX/UI: MAPEO DE COLESTEROL (Muestra texto, envía número)
+# ========================================================
+colesterol_map = {
+    "Normal": 1,
+    "Por encima de lo normal": 2,
+    "Muy superior a lo normal": 3
+}
+colesterol_visual = st.sidebar.selectbox("Nivel de Colesterol", list(colesterol_map.keys()))
+colesterol_modelo = colesterol_map[colesterol_visual]
+
+# ==================================
+# CODIFICACIÓN
+# ==================================
+genero = 1 if genero == "Masculino" else 0
+fuma = 1 if fuma == "Sí" else 0
+consume_alcohol = 1 if consume_alcohol == "Sí" else 0
+
+actividad_map = {"Baja": 0, "Media": 1, "Alta": 2}
+actividad_fisica = actividad_map[actividad_fisica]
+
+# ==================================
+# DATAFRAME MANUAL
+# ==================================
+datos_manual = pd.DataFrame([{
+    "id_paciente": 1,
+    "edad_dias": edad_anios * 365,
+    "genero": genero,
+    "estatura_cm": estatura_cm,
+    "peso_kg": peso_kg,
+    "presion_sistolica": presion_sistolica,
+    "presion_diastolica": presion_diastolica,
+    "colesterol": colesterol_modelo,  # Envía el valor numérico (1, 2 o 3) requerido por el modelo
+    "glucosa": glucosa,
+    "fuma": fuma,
+    "consume_alcohol": consume_alcohol,
+    "actividad_fisica": actividad_fisica,
+}])
+
+# ==================================
+# UI RESULTADO
+# ==================================
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    st.subheader("Variables ingresadas (manual)")
+    datos_ui = datos_manual.copy()
+    datos_ui["edad_anios"] = edad_anios
+    datos_ui = datos_ui.drop(columns=["edad_dias"])
+    st.dataframe(datos_ui, use_container_width=True, hide_index=True)
+
+# Variables para mostrar recomendaciones fuera de la columna
+mostrar_recomendaciones = False
+
+with col2:
+    debug = st.checkbox("🔧 Mostrar debug técnico")
+
+    if st.button("🔍 Predecir Riesgo"):
+
+        resultado = hacer_prediccion(datos_manual)
+
+        if "error" in resultado:
+            st.error(resultado["error"])
+
+        else:
+
+            if debug:
+                st.json(resultado)
+
+            fila = resultado["data"][0]
+            pred = fila["prediction"]
+            probs = fila.get("predictionValues", [])
+
+            prob_riesgo = None
+
+            for p in probs:
+                if p.get("label") in [1, "1", 1.0, "1.0"]:
+                    prob_riesgo = p.get("value")
+
+            if prob_riesgo is None and len(probs) > 0:
+                prob_riesgo = max(
+                    probs,
+                    key=lambda x: x.get("value", 0)
+                ).get("value")
+
+            st.subheader("Resultado del modelo")
+            st.metric("Clase de riesgo", str(pred))
+
+            if prob_riesgo is not None:
+                st.progress(float(prob_riesgo))
+                st.write(f"📊 Probabilidad de riesgo: {prob_riesgo:.2%}")
+
+            if pred == 1:
+                st.error("🔴 Alto riesgo cardiovascular")
+                mostrar_recomendaciones = True
+            else:
+                st.success("🟢 Bajo riesgo cardiovascular")
+
+# =====================================================
+# RECOMENDACIONES (ANCHO COMPLETO)
+# =====================================================
+
+if mostrar_recomendaciones:
+
+    st.markdown("---")
+
+    izquierda, centro, derecha = st.columns([1, 3, 1])
+
+    with centro:
+
+        st.subheader("❤️ Recomendaciones Saludables")
+
+        with st.container(border=True):
+
+            st.markdown("""
+### 🥗 Alimentación saludable
+
+- Consuma frutas y verduras diariamente.
+- Prefiera alimentos integrales.
+- Reduzca el consumo de sal.
+- Disminuya grasas saturadas y azúcares.
+- Evite alimentos ultraprocesados.
+
+### 🏃 Actividad física
+
+- Realice al menos **150 minutos** de actividad física moderada por semana.
+- Caminar 30 minutos diarios aporta beneficios importantes para el corazón.
+
+### ⚖️ Mantenga un peso saludable
+
+- Controle su peso corporal.
+- Procure mantener un índice de masa corporal adecuado.
+
+### 🚭 Hábitos saludables
+
+- Evite fumar.
+- Limite el consumo de alcohol.
+- Manténgase bien hidratado.
+
+### 🩺 Controles médicos
+
+- Controle periódicamente la presión arterial.
+- Revise colesterol y glucosa.
+- Asista a controles médicos preventivos.
+
+### 😴 Bienestar
+
+- Duerma entre 7 y 8 horas.
+- Reduzca el estrés mediante ejercicio, descanso y actividades recreativas.
+            """)
+
+        st.warning(
+            "⚠️ Estas recomendaciones son informativas y no sustituyen la valoración de un profesional de la salud."
+        )         
+
+# ==================================
+# PREDICCIÓN EN LOTE
+# ==================================
+st.markdown("### 📂 Predicciones en Lote")
+archivo_csv = st.file_uploader("Suba un archivo CSV con datos de pacientes", type=["csv"])
+
+if archivo_csv is not None:
+    datos_csv = pd.read_csv(archivo_csv)
+    st.dataframe(datos_csv.head(), use_container_width=True, hide_index=True)
+
+    if st.button("🔍 Predecir desde CSV"):
+        if "id_paciente" not in datos_csv.columns:
+            datos_csv["id_paciente"] = range(1, len(datos_csv) + 1)
+
+        resultado = hacer_prediccion(datos_csv)
+
+        if "error" in resultado:
+            st.error(resultado["error"])
+        else:
+            predicciones = []
+            probabilidades = []
+
+            for fila in resultado["data"]:
+                pred = fila["prediction"]
+                probs = fila.get("predictionValues", [])
+
+                prob_riesgo = None
+                for p in probs:
+                    if p.get("label") in [1, "1", 1.0, "1.0"]:
+                        prob_riesgo = p.get("value")
+
+                if prob_riesgo is None and len(probs) > 0:
+                    prob_riesgo = max(probs, key=lambda x: x.get("value", 0)).get("value")
+
+                predicciones.append(pred)
+                probabilidades.append(prob_riesgo)
+
+            datos_csv["riesgo_predicho"] = predicciones
+            datos_csv["probabilidad_riesgo"] = probabilidades
+
+            st.success("✅ Predicciones generadas correctamente")
+            st.dataframe(datos_csv, use_container_width=True, hide_index=True)
+
+            st.download_button(
+                label="⬇️ Descargar resultados",
+                data=datos_csv.to_csv(index=False).encode("utf-8"),
+                file_name="resultados_riesgo.csv",
+                mime="text/csv"
+            )
+
+
+# ==================================
+# AUTOR (CONSOLIDADO)
+# ==================================
+st.markdown("""
+<style>
+.autor-card {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0px 2px 8px rgba(0,0,0,0.08);
+    margin-top: 30px;
+}
+
+.autor-nombre {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.autor-profesion {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 15px;
+}
+
+.autor-info {
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.8;
+}
+
+.linkedin-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #0077B5;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-weight: 600;
+}
+</style>
+
+<div class="autor-card">
+<div class="autor-nombre">
+Desarrollado por Kely Jhojana Hincapié Zapata
+</div>
+
+<div class="autor-profesion">
+Especialista en Analítica de Datos | Profesional en Administración Financiera |
+Tecnóloga en Gestión de Redes de Datos
+</div>
+
+<div class="autor-info">
+<a href="https://wa.me/573015704518?text=Hola%20Kely,%20he%20visto%20tu%20proyecto%20de%20Machine%20Learning%20y%20quisiera%20más%20información."
+target="_blank"
+style="background:#25D366;color:white;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;margin-right:10px;">
+💬 WhatsApp Business
+</a>
+
+🚀 <b>Proyecto:</b> Modelo Predictivo de Riesgo Cardiovascular basado en Machine Learning (scikit-learn),
+desplegado en Streamlit Cloud.
+
+<br>
+<a class="linkedin-btn"
+href="https://www.linkedin.com/in/kely-jhojana-hincapi%C3%A9-zapata-502587130/"
+target="_blank">
+LinkedIn Profesional
+</a>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+# ==================================
+# FOOTER
+# ==================================
+st.markdown("---")
+st.caption("""
+✨ Modelo predictivo de riesgo cardiovascular basado en técnicas de Machine Learning para clasificación binaria,
+entrenado con variables clínicas y hábitos de vida.
+
+La solución fue entrenada con scikit-learn (RandomForestClassifier) y desplegada como una
+aplicación interactiva en Streamlit Cloud.
+""")
